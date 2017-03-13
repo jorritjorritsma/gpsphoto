@@ -11,7 +11,7 @@ from boto.s3.key import Key
 import datetime
 import uuid
 import os, sys
-
+import ast # to digest the geom object from postgis geojson
 
 ###############################################################################
 class GpsPhoto:
@@ -284,7 +284,7 @@ class GpsDb:
         lon = rowDict['coordinates']['lon']
         bearing = rowDict['coordinates']['bearing']
         if 'z' not in rowDict['coordinates'] or not rowDict['coordinates']['z']:
-            z = -999
+            z = None
         else:
             z = rowDict['coordinates']['z']
             
@@ -303,41 +303,39 @@ class GpsDb:
         lastid = self.cur.fetchone()[0]
         self.conn.commit()
         return(lastid)
-    
-    def getPhotoPointByOwner(self, rowid=None, columns=[], user=None):
-        sql = "select " + ','.join(columns) + " from "    + rowDict['table'] + " where userid = %s"
-        self.cur.execute(sql, user)
-        result = self.cur.fetchall()
-        return(result)
 
-    def getPhotoPointsAsGeojson(self, columns=[], query=None, data=None):
+    def getPhotoPoints(self, columns=[], orderColumn='phototime', order='DESC', query=None, data=None, limit='ALL'):
+        '''
+        columns[]:   array of column names to get back from query
+        orderColumn: column to order results by
+        order:       order direction (default: DESC)
+        query:       dict of query stubs to be AND-ed together to one query
+        data:        dict with values to fill the parameters in query dict stubs.
+                     The keys of data entries must match the parameters in the stubs.
+        limit:       Limit the amount of results returned by a number (default: ALL)
+        '''
+      
         queryArray = []
-        for item in query.keys():
-            if item in data.keys():
-                queryArray.append(query[item])
+        if query:
+            for item in query.keys():
+                if item in data.keys():
+                    queryArray.append(query[item])
         whereClause = ' AND '.join(queryArray)
 
         # No query entries, no WHERE clause
         if len(queryArray) == 0:
-            sql = "select ST_AsGeoJSON(geom)," + ','.join(columns) + " from " + self.config.DB_PHOTOTABLE
+            sql = "SELECT ST_AsGeoJSON(geom), {} FROM {} ORDER BY {} {} LIMIT {}".format(','.join(columns), self.config.DB_PHOTOTABLE, orderColumn, order, limit)
         else:
-            sql = "select ST_AsGeoJSON(geom)," + ','.join(columns) + " from " + self.config.DB_PHOTOTABLE + ' WHERE ' + whereClause
+            sql = "SELECT ST_AsGeoJSON(geom), {} FROM {} WHERE {} ORDER BY {} {} LIMIT {}".format(','.join(columns), self.config.DB_PHOTOTABLE, whereClause, orderColumn, order, limit)
 
         self.cur.execute(sql, data)
         result = self.cur.fetchall()
-        return(result)
-    
-    def getPhotoPointsAsKml(self, columns=[], whereClause=None, data=None):
-        sql = "select ST_AsKML(geom)," + ','.join(columns) + " from " + self.config.DB_PHOTOTABLE + whereClause
-        self.cur.execute(sql, data)
-        result = self.cur.fetchall()
-        return(result)
-    
-    def getAllPhotoPointsAsKml(self, columns=[]):
-        sql = "select ST_AsKML(geom)," + ','.join(columns) + " from " + self.config.DB_PHOTOTABLE
-        self.cur.execute(sql)
-        result = self.cur.fetchall()
-        return(result)
+        pythonicResult = []
+        for i in range(len(result)):
+            # for some reason the object given back by ST_AsGeoJSON is not interpreted as python object
+            # the ast.literal_eval makes it a python dict, which we can easily use again.
+            pythonicResult.append([ast.literal_eval(result[i][0])] + list(result[i][1:]))
+        return(pythonicResult)
 
     def disconnect(self, conn, cur):
         self.cur.close()

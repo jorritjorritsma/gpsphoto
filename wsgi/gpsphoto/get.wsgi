@@ -7,8 +7,9 @@ from datetime import datetime, timedelta
 from dateutil import tz
 import textwrap
 import geojson
+import simplekml
 from pytz import timezone
-import ast
+import json
 
 from gpsphoto import GpsDb
 
@@ -32,7 +33,7 @@ def application(environ, start_response):
     query = {}
     try:
         parameters = parse_qs(environ.get('QUERY_STRING', ''))
-        
+
         # f : json, pjson, kml, kmz
         if  'f' in parameters:
             f = parameters['f'][0].lower()
@@ -44,8 +45,9 @@ def application(environ, start_response):
             timeZone = timezone(parameters['timezone'][0])
         else:
             timeZone = timezone('UTC') # if we cannot get the timezone let's assume UTC
+            sys.stderr.write('hallo')
         data['timezone'] = timeZone.zone
-    
+
         # e.g. 2016-09-26
         if 'begindate' in parameters:
             beginDate = parameters['begindate'][0]
@@ -117,55 +119,55 @@ def application(environ, start_response):
         gpsDB = GpsDb()
 
         columns = ['title', 'type', 'description', 'url', 'thumburl', "phototime at time zone '%s' as phototime" % timeZone.zone]
-
-        results = gpsDB.getPhotoPointsAsGeojson(columns=columns, query=query, data=data)
         
-        points = []
-        for entry in results:
-            geom = ast.literal_eval(entry[0])
+        results = gpsDB.getPhotoPoints(columns=columns, query=query, data=data, limit=100)
 
-            sys.stderr.write(str(geom))
+        if f == 'json' or f == 'pjson':
+            points = []
+            for entry in results:
+                photoTime = entry[6].strftime('%-d %b %Y %-H:%M')
+                title = '<h1>%s (%s)</h1>' % (entry[1], entry[2])
+                image = '<p><a href="%s"><img src="%s" /></a></p>Photo taken at %s (%s)<br>' % (entry[4], entry[5], photoTime, timeZone.zone)
+                description = "<br>".join(textwrap.wrap(entry[3], 40))
+                popup = title + image + description
+                myFeature = geojson.Feature(geometry=entry[0],
+                                             properties={"popup": popup,
+                                                         "title": title,
+                                                         "eventtype": entry[2],
+                                                         "description": description,
+                                                         "thumbnail": entry[5],
+                                                         "image": entry[4],
+                                                         "time": photoTime,
+                                                         "timezone": timeZone.zone
+                                             })
+                points.append(myFeature)
+            crs = {
+                   "type": "name",
+                   "properties": {
+                       "name": "EPSG:4326"
+                   }
+            }
 
-            photoTime = entry[6].strftime('%-d %b %Y %-H:%M')
+            featurecollection = geojson.FeatureCollection(points, crs=crs)
             
-            title = '<h1>%s (%s)</h1>' % (entry[1], entry[2])
-            image = '<p><a href="%s"><img src="%s" /></a></p>Photo taken at %s (%s)<br>' % (entry[4], entry[5], photoTime, timeZone.zone)
-            description = "<br>".join(textwrap.wrap(entry[3], 40))
-            popup = title + image + description
-            myFeature = geojson.Feature(geometry=geom,
-                                         properties={"popup": popup,
-                                                     "title": title,
-                                                     "eventtype": entry[2],
-                                                     "description": description,
-                                                     "thumbnail": entry[5],
-                                                     "image": entry[4],
-                                                     "time": photoTime,
-                                                     "timezone": timeZone.zone
-                                         })
-            points.append(myFeature)
-        crs = {
-               "type": "name",
-               "properties": {
-                   "name": "EPSG:4326"
-               }
-        }
-
-        featurecollection = geojson.FeatureCollection(points, crs=crs)
+            if f == 'pjson':
+                output = "mapitems=" + geojson.dumps(featurecollection)
+                response_headers = [('Content-Type', 'application/javascript'), ('Content-Length', str(len(output)))]
+            else: # normal geojson
+                output = geojson.dumps(featurecollection)
+                response_headers = [('Content-Type', 'application/json'), ('Content-Length', str(len(output)))]
+        elif f == 'kml' or f == 'kmz':
+            kml = simplekml.Kml()
             
-        if f == 'pjson':
-            #output = "var mapitems=" + geojson.dumps(featurecollection)
-            output = "mapitems=" + geojson.dumps(featurecollection)
-            response_headers = [('Content-Type', 'application/javascript'), ('Content-Length', str(len(output)))]
-        elif f == 'kml':
-            # outputentry = '  <Placemark>\n    <name>%s</name>\n    <description>\n      <![CDATA[<p><a href="%s"><img src="%s" /></a></p>]]>\n    </description>\n    %s\n  </Placemark>\n' % (entry[1], entry[2], entry[3], entry[0])
-            pass
-        elif f == 'kmz':
-            pass
-        # default json
+            for entry in results:
+                pnt = kml.newpoint(name="%s (%s)" % (entry[1], entry[2]), description='<![CDATA[<p><a href="%s"><img src="%s" /></a></p>]]>' % (entry[3], entry[4]), coords=[(entry[0]['coordinates'][0], entry[0]['coordinates'][1], entry[0]['coordinates'][2])])
+
+            output = kml.kml().encode('utf-8')
+            response_headers = [('Content-Type', 'application/vnd.google-earth.kml+xml'), ('Content-Length', str(len(output)))]
+
         else:
-            output = geojson.dumps(featurecollection)
-            response_headers = [('Content-Type', 'application/json'), ('Content-Length', str(len(output)))]
-    
+            raise() # we should not get here, so raise an exception
+        
         status = '200 OK'
         start_response(status, response_headers)
         return [output]
