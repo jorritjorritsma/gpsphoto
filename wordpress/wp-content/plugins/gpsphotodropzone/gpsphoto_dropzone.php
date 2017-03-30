@@ -55,7 +55,7 @@ function html_form_code($username) {
           <div class="form-group">
             <label class="col-md-3 control-label" for="submit"></label>
             <div class="col-md-4">
-              <button id="submit" type="submit" class="btn btn-primary">Submit!</button>
+              <button id="submit" type="submit" class="btn btn-primary">Submit</button>
             </div>
           </div>
         <p>

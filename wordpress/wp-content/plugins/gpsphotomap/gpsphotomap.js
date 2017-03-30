@@ -1,17 +1,23 @@
+// Basemap layers:
+// mapbox layer: registration required, limited tiles
 var mapboxUrl = "https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYmVyc2lobmwiLCJhIjoiY2l1c3R1bmVwMDAwMTJvcXd6NnpwZW0yMCJ9.zrMm9tMHb9L41nG9XuXT-w",
     mapboxAttr = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
       '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-      'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+      'Imagery © <a href="http://mapbox.com">Mapbox</a>';
 
-    opentopoUrl = 'http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-    opentopoAttr = 'Map data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)',
+// opentopo layer: free but not very stable
+var opentopoUrl = 'http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    opentopoAttr = 'Map data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
 
-    osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    osmAttr = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+// osm layer: free and fast
+var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    osmAttr = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
-    esriWorldImageryUrl = 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    esriWorldImageryAttr = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community' ;
+// esri world imagery layer: free and fast
+var esriWorldImageryUrl = 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    esriWorldImageryAttr = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
 
+// let's define the layers we can add as basemaps
 var satellite = L.tileLayer(mapboxUrl, {id: 'mapbox.satellite', maxZoom: 18, attribution: mapboxAttr}),
     topo = L.tileLayer(opentopoUrl, {maxZoom: 17, attribution: opentopoAttr}),
     osm = L.tileLayer(osmUrl, {maxZoom: 19, attribution: osmAttr}),
@@ -23,6 +29,7 @@ var mymap = L.map("mapid", {
     layers: [osm]
 });
 
+// Chosen basemap layers for inclusion
 var baseLayers = {
     "OSM": osm,
     "World Imagery (ESRI)": esriWorldImagery
@@ -99,14 +106,14 @@ function getFormData() {
   getNewJSON(url, function(mapitems) {
     mymap.removeLayer(locationLayer);
     addLayerToMap(mymap, mapitems);
-    //alert(url, JSON.stringify(mapitems));
   });
+  
 }
 	
 new Pikaday({
   field: document.getElementById("enddate"),
-  onSelect: date => {
-  const year = date.getFullYear(),
+  onSelect: function(date) {
+    const year = date.getFullYear(),
     month = date.getMonth() + 1,
     day = date.getDate(),
     formattedDate = [
@@ -117,6 +124,7 @@ new Pikaday({
     document.getElementById("enddate").value = formattedDate;
   }
 });
+
 
 var mytimezone=jstz.determine().name();
 var jsonurl = 'http://gpsphoto.fritz.box/get?f=pjson&timezone=' + mytimezone;
@@ -135,5 +143,6 @@ var jsonurl = 'http://gpsphoto.fritz.box/get?f=pjson&timezone=' + mytimezone;
 }(document));
 
 
-qform.elements.timezone.value = jstz.determine().name();
+qform.elements.timezone.value = mytimezone
+
 
