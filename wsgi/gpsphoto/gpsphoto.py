@@ -32,13 +32,16 @@ class GpsPhoto:
             return(None)
         else:
             self.imageFormat = self.image.format
-        self.getExif()
+        if not self.getExif():
+            return(None)
         self.correctImageOrientation()
         self.getCoordinates()
-        self.getPhotoTimeStampZ()
+        if not self.getPhotoTimeStampZ():
+            return(None)
         self.getUploadTimeStampZ()
         self.getResizedImage()
         self.get_guid()
+        return(True)
     
     def getImageFromUrl(self, url):
         '''Download image from provided URL'''
@@ -208,7 +211,11 @@ class GpsPhoto:
         try:
             self.getDate()
             self.getTime()
-            self.phototimestampz = '%4d-%02d-%02d %02d:%02d:%02d UTC' % (self.date[0], self.date[1], self.date[2], self.time[0], self.time[1], self.time[2])
+            self.phototimestampz = '%04d-%02d-%02d %02d:%02d:%02d UTC' % (self.date[0], self.date[1], self.date[2], self.time[0], self.time[1], self.time[2])
+            # if the time is not properly set, there is probably no connection with GPS
+            # assume wrong location is best, thus bail here
+            if self.phototimestampz.startswith('0000'):
+                raise Exception('Wrong time in photo')
             return (True)
         except Exception, e:
             print 'failed getPhotoTimeStampZ'
@@ -282,9 +289,10 @@ class GpsDb:
                     
         lat = rowDict['coordinates']['lat']
         lon = rowDict['coordinates']['lon']
+
         bearing = rowDict['coordinates']['bearing']
         if 'z' not in rowDict['coordinates'] or not rowDict['coordinates']['z']:
-            z = None
+            z = -99999
         else:
             z = rowDict['coordinates']['z']
             
@@ -295,9 +303,8 @@ class GpsDb:
             rsid = 4326 # don't know how to handle this yet....
 
         sql = "INSERT INTO " + table + " (guid, filename, title, description, url, thumburl, bearing, type, userid, uploadtime, phototime, geom) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, ST_SetSRID(ST_MakePoint(%s, %s, %s), %s))"
-        
         data = (values['guid'], values['filename'], values['title'], values['description'], values['url'], values['thumburl'], bearing, values['type'], values['userid'], values['uploadtime'], values['phototime'], lon, lat, z, rsid)
-        
+
         self.cur.execute(sql, data)
         self.cur.execute('SELECT LASTVAL()')
         lastid = self.cur.fetchone()[0]
@@ -334,7 +341,12 @@ class GpsDb:
         for i in range(len(result)):
             # for some reason the object given back by ST_AsGeoJSON is not interpreted as python object
             # the ast.literal_eval makes it a python dict, which we can easily use again.
-            pythonicResult.append([ast.literal_eval(result[i][0])] + list(result[i][1:]))
+            try:
+                pythonicResult.append([ast.literal_eval(result[i][0])] + list(result[i][1:]))
+            except Exception, e:
+               print e
+               print result[i][0]
+               print result[i][1:]
         return(pythonicResult)
 
     def disconnect(self, conn, cur):
@@ -368,8 +380,10 @@ class PhotoStore:
             k.key = fileName
             try:
                 output = StringIO.StringIO()
-                image.save(output, format=imgFormat, exif=exif)
-                #image.save(output, format=imgFormat)
+                if self.config.KEEP_EXIF:
+                    image.save(output, format=imgFormat, exif=exif)
+                else:
+                    image.save(output, format=imgFormat)
                 fileContents = output.getvalue()
                 output.close()
                 k.set_contents_from_string(fileContents)

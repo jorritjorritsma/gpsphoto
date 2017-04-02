@@ -22,6 +22,9 @@ function gpsphotomap_html_form_code($username) {
 
 <input name="baseurl" id="baseurl" value="http://gpsphoto.fritz.box/get" type="hidden">
 <input name="timezone" id="timezone" value="" type="hidden">
+<!-- hidden user field for not changing js code but not including user filtering
+Probably needs checking on js side to dynamically build query url -->
+<input name="user" id="user" value="" type="hidden">
 
 
 <!-- Text input-->
