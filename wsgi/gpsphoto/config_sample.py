@@ -1,4 +1,3 @@
-
 ID = ''                     # S3 ID
 KEY = ''                    # S3 key
 BUCKET = ''                 # S3 bucket (needs to be lowercase)
@@ -8,3 +7,4 @@ DB_NAME = ''                # DB Name (postgresql)
 DB_USER = ''                # DB User name
 DB_PASSWD = ''              # DB Password
 DB_PHOTOTABLE = ''          # table name
+KEEP_EXIF = True|False      # keep exif header in saved photos
