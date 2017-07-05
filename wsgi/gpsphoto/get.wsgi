@@ -94,7 +94,7 @@ def application(environ, start_response):
 
             #sys.stderr.write('hallo')
 
-            # get current local time of requestor
+            # get current local time of requester
             if endDate is None:
                 endDateTime= datetime.now(timeZone)
                 endDate =  endDateTime.strftime("%Y-%m-%d")  # 2016-09-26 18:02:08
@@ -113,7 +113,7 @@ def application(environ, start_response):
               'enddate':   "phototime AT TIME ZONE %(timezone)s < %(enddate)s",
               'user':      "userid ILIKE %(user)s",
               'type':      "type ILIKE %(type)s",
-              'bbox':      "ST_MakeEnvelope(%(bboxleft)f,%(bboxbottom)f,%(bboxright)f,%(bboxtop)f)"
+              'bbox':      "geom @ ST_MakeEnvelope(%(bboxleft)s,%(bboxbottom)s,%(bboxright)s,%(bboxtop)s)"
              }
         
         gpsDB = GpsDb()
