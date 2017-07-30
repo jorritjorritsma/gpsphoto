@@ -12,7 +12,7 @@ create table photos (
             userid VARCHAR(100),
             event VARCHAR(100),
             verified BOOLEAN,
-            positioning VARCHAR(20),
+            positioningmethod VARCHAR(20),
             uploadtime TIMESTAMP WITH TIME ZONE,
             phototime TIMESTAMP WITH TIME ZONE);
 
@@ -33,6 +33,3 @@ CREATE INDEX ON photos (phototime)
 -- Grant access to table
 grant select,insert,delete,update ON photos TO mapserver;
 grant select,update ON photos_id_seq TO mapserver;
-
-
-

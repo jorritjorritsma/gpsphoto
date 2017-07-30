@@ -284,12 +284,75 @@ class GpsDb:
         #               'thumburl: <url of thumbnail>,
         #               'type': <cartographic type>,
         #               'userid': <email address / user identifier>,
+        #               'event': <event name>,
+        #               'positioningmethod': <'GPS'|'manual'>
         #               'uploadtime': <yyyy-mm-dd hh:mm:ss UTC>,
         #               'phototime': <yyyy-mm-dd hh:mm:ss UTC>}
         # }
-            
+        try:
+            (sql, data) = _updateOrModifySql(self, rowDict, 'insert')
+            self.cur.execute(sql, data)
+            self.cur.execute('SELECT LASTVAL()')
+            lastid = self.cur.fetchone()[0]
+            self.conn.commit()
+            return(lastid)
+        except Exception, e:
+            print(str(e))
+            raise Exception('Failed to insert a record')
+    
+    def updateGpsPhotoRow(self, guid=None, rowDict={}):
+        # rowdict = {
+        # 'coordinates' : {     'lat' : <latitude>,
+        #                       'lon' : <longitude>,
+        #                       'z' : <z>,
+        #                       'bearing' : <compass bearing>,
+        #                       'crs' : <map datum>},
+        # 'values' : {  'guid': <guid>,
+        #               'title': <title>,
+        #               'description': <description>,
+        #               'type': <cartographic type>,
+        #               'event': <name of event>,
+        #               'verified': <Boolean>,
+        #               'positioningmethod': <'GPS'|'manual'>
+        #            }
+        # }
+        if guid is None:
+            print("Trying to update a record without specifying a guid")
+            return(None)
+        try:
+            (sql, data) = _updateOrModifySql(self, rowDict, 'update')
+            self.cur.execute(sql, data)
+            self.conn.commit()
+            return(True)
+        except Exception, e:
+            print(str(e))
+            raise Exception("Failed to update record")
+
+    def _updateOrModifySql(rowDict, type):
+        # rowdict = {
+        # 'coordinates' : {     'lat' : <latitude>,
+        #                       'lon' : <longitude>,
+        #                       'z' : <z>,
+        #                       'bearing' : <compass bearing>,
+        #                       'crs' : <map datum>},
+        # 'values' : {  'guid': <guid>
+        #               'filename': <photo name>,
+        #               'title': <title>,
+        #               'description': <description>,
+        #               'url': <photo url>,
+        #               'thumburl: <url of thumbnail>,
+        #               'type': <cartographic type>,
+        #               'userid': <email address / user identifier>,
+        #               'event': <event name>,
+        #               'positioningmethod': <'GPS'|'manual'>
+        #               'uploadtime': <yyyy-mm-dd hh:mm:ss UTC>,
+        #               'phototime': <yyyy-mm-dd hh:mm:ss UTC>}
+        # },
+        # type = 'insert'|'update'
+        
         values = rowDict['values']
-                    
+        
+        # let's process the coordinates
         lat = rowDict['coordinates']['lat']
         lon = rowDict['coordinates']['lon']
 
@@ -304,15 +367,45 @@ class GpsDb:
             rsid = 4326
         else:
             rsid = 4326 # don't know how to handle this yet....
-
-        sql = "INSERT INTO " + self.gpsPhotoTable + " (guid, filename, title, description, url, thumburl, bearing, type, userid, uploadtime, phototime, geom) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, ST_SetSRID(ST_MakePoint(%s, %s, %s), %s))"
-        data = (values['guid'], values['filename'], values['title'], values['description'], values['url'], values['thumburl'], bearing, values['type'], values['userid'], values['uploadtime'], values['phototime'], lon, lat, z, rsid)
-
-        self.cur.execute(sql, data)
-        self.cur.execute('SELECT LASTVAL()')
-        lastid = self.cur.fetchone()[0]
-        self.conn.commit()
-        return(lastid)
+        
+        fields = {}
+        # all normal attributes get the same sql statent format
+        for item in values:
+            fields[item] = '%s'
+        
+        # geom is special
+        values['geom'] = [lon, lat, z, rsid]
+        fields['geom'] = 'ST_SetSRID(ST_MakePoint(%s, %s, %s), %s)'
+        
+        # bearing was considered part of the geometry, hence added here
+        values['bearing'] = coordinates['bearing']
+        fields['bearing'] = '%s'
+        
+        columns = []
+        columnValues = []
+        data = []
+        for item in fields:
+            columns.append(item)
+            columnValues.append(fields[item])
+            if item == 'geom':
+                data += values['geom']
+        else:
+            data.append(values[item])
+            
+        if type == 'insert':
+            sql = "INSERT INTO %s (%s) VALUES (%s)" % (self.gpsPhotoTable, ','.join(columns), ','.join(columnValues))
+        elif type == 'update':
+            # We'll be overwriting the guid with itself, but that should be ok
+            sql = "UPDATE %s SET (%s) = (%s) WHERE guid = %s" % (self.gpsPhotoTable, ','.join(columns), ','.join(columnValues), values['guid'])
+            data.append(values['guid'])
+        else:
+            return(None)
+        
+        # let's for now see what sql we are getting
+        print(sql)
+        print(str(tuple(data)))
+        
+        return(sql, tuple(data))
 
     def getPhotoPoints(self, columns=[], orderColumn='phototime', order='DESC', query=None, data=None, limit='ALL'):
         '''
@@ -347,38 +440,20 @@ class GpsDb:
             try:
                 pythonicResult.append([ast.literal_eval(result[i][0])] + list(result[i][1:]))
             except Exception, e:
-               print e
-               print result[i][0]
-               print result[i][1:]
+               print(str(e))
+               print(result[i][0])
+               print(result[i][1:])
                return(None)
         return(pythonicResult)
     
     def deleteGpsPhotoRow(self, guid):
-        pass
-    
-    def updateGpsPhotoRow(self, guid=None, rowdict={}):
-        # rowdict = {
-        # 'coordinates' : {     'lat' : <latitude>,
-        #                       'lon' : <longitude>,
-        #                       'z' : <z>,
-        #                       'bearing' : <compass bearing>,
-        #                       'crs' : <map datum>},
-        # 'values' : {  'filename': <photo name>,
-        #               'title': <title>,
-        #               'description': <description>,
-        #               'url': <photo url>,
-        #               'thumburl: <url of thumbnail>,
-        #               'type': <cartographic type>,
-        #               'userid': <email address / user identifier>,
-        #               'event': <name of event>
-        #               'verified': <True|False>
-        #               'uploadtime': <yyyy-mm-dd hh:mm:ss UTC>,
-        #               'phototime': <yyyy-mm-dd hh:mm:ss UTC>}
-        # }
-        if guid is None:
-            print("Trying to update a record without specifying a guid")
-            return(None)
-
+        try:
+            sql = "delete from {} where guid = %s".format(self.gpsPhotoTable)
+            self.cur.execute(sql, (guid))
+            self.conn.commit()
+        except Exception, e:
+            print(str(e))
+            raise Exception("Could not delete record")
     
     def disconnect(self, conn, cur):
         self.cur.close()
