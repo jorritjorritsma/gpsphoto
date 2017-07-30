@@ -237,7 +237,8 @@ class GpsPhoto:
             self.epoch = None
             return(None)
         
-    def getResizedImage(self, width=1280, height=1024, thumbwidth=200, thumbheight=133):
+    #def getResizedImage(self, width=1280, height=1024, thumbwidth=200, thumbheight=133):
+    def getResizedImage(self, width=self.config.imgWidth, height=self.config.imgHeight, thumbwidth=self.config.thumbWidth, thumbheight=self.config.thumbHeight):
         try:
             oldsize = self.image.size
             ratio = min(float(width)/oldsize[0], float(height)/oldsize[1])
@@ -255,7 +256,7 @@ class GpsPhoto:
  
 ############################################################################### 
 class GpsDb:
-    def __init__(self):
+    def __init__(self, org=None):
         sys.path.append(os.path.dirname(__file__))
         import config
         self.config = config
@@ -263,10 +264,14 @@ class GpsDb:
         conn_string = "host='%s' dbname='%s' user='%s' password='%s'" % (self.config.DB_HOST, self.config.DB_NAME, self.config.DB_USER, self.config.DB_PASSWD)
         self.conn = psycopg2.connect(conn_string)
         self.cur = self.conn.cursor()
-        self.gpsPhotoTable = self.config.DB_PHOTOTABLE
+        if org is None or org == '':
+            self.gpsPhotoTable = self.config.DB_PHOTOTABLE
+        else:
+            self.gpsPhotoTable = '{}_{}'.format(self.config.DB_PHOTOTABLE, org)
     
-    def insertGpsPhotoRow(self, rowDict={}, table=''):
-        # { 'coordinates' : {   'lat' : <latitude>,
+    def insertGpsPhotoRow(self, rowDict={}):
+        # rowdict = {
+        # 'coordinates' : {     'lat' : <latitude>,
         #                       'lon' : <longitude>,
         #                       'z' : <z>,
         #                       'bearing' : <compass bearing>,
@@ -278,12 +283,10 @@ class GpsDb:
         #               'url': <photo url>,
         #               'thumburl: <url of thumbnail>,
         #               'type': <cartographic type>,
-        #               'userid': <email address / user identifyer>,
+        #               'userid': <email address / user identifier>,
         #               'uploadtime': <yyyy-mm-dd hh:mm:ss UTC>,
         #               'phototime': <yyyy-mm-dd hh:mm:ss UTC>}
         # }
-        if table == '':
-            table = self.gpsPhotoTable
             
         values = rowDict['values']
                     
@@ -302,7 +305,7 @@ class GpsDb:
         else:
             rsid = 4326 # don't know how to handle this yet....
 
-        sql = "INSERT INTO " + table + " (guid, filename, title, description, url, thumburl, bearing, type, userid, uploadtime, phototime, geom) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, ST_SetSRID(ST_MakePoint(%s, %s, %s), %s))"
+        sql = "INSERT INTO " + self.gpsPhotoTable + " (guid, filename, title, description, url, thumburl, bearing, type, userid, uploadtime, phototime, geom) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, ST_SetSRID(ST_MakePoint(%s, %s, %s), %s))"
         data = (values['guid'], values['filename'], values['title'], values['description'], values['url'], values['thumburl'], bearing, values['type'], values['userid'], values['uploadtime'], values['phototime'], lon, lat, z, rsid)
 
         self.cur.execute(sql, data)
@@ -331,9 +334,9 @@ class GpsDb:
 
         # No query entries, no WHERE clause
         if len(queryArray) == 0:
-            sql = "SELECT ST_AsGeoJSON(geom), {} FROM {} ORDER BY {} {} LIMIT {}".format(','.join(columns), self.config.DB_PHOTOTABLE, orderColumn, order, limit)
+            sql = "SELECT ST_AsGeoJSON(geom), {} FROM {} ORDER BY {} {} LIMIT {}".format(','.join(columns), self.gpsPhotoTable, orderColumn, order, limit)
         else:
-            sql = "SELECT ST_AsGeoJSON(geom), {} FROM {} WHERE {} ORDER BY {} {} LIMIT {}".format(','.join(columns), self.config.DB_PHOTOTABLE, whereClause, orderColumn, order, limit)
+            sql = "SELECT ST_AsGeoJSON(geom), {} FROM {} WHERE {} ORDER BY {} {} LIMIT {}".format(','.join(columns), self.gpsPhotoTable, whereClause, orderColumn, order, limit)
 
         self.cur.execute(sql, data)
         result = self.cur.fetchall()
@@ -347,11 +350,41 @@ class GpsDb:
                print e
                print result[i][0]
                print result[i][1:]
+               return(None)
         return(pythonicResult)
+    
+    def deleteGpsPhotoRow(self, guid):
+        pass
+    
+    def updateGpsPhotoRow(self, guid=None, rowdict={}):
+        # rowdict = {
+        # 'coordinates' : {     'lat' : <latitude>,
+        #                       'lon' : <longitude>,
+        #                       'z' : <z>,
+        #                       'bearing' : <compass bearing>,
+        #                       'crs' : <map datum>},
+        # 'values' : {  'filename': <photo name>,
+        #               'title': <title>,
+        #               'description': <description>,
+        #               'url': <photo url>,
+        #               'thumburl: <url of thumbnail>,
+        #               'type': <cartographic type>,
+        #               'userid': <email address / user identifier>,
+        #               'event': <name of event>
+        #               'verified': <True|False>
+        #               'uploadtime': <yyyy-mm-dd hh:mm:ss UTC>,
+        #               'phototime': <yyyy-mm-dd hh:mm:ss UTC>}
+        # }
+        if guid is None:
+            print("Trying to update a record without specifying a guid")
+            return(None)
 
+    
     def disconnect(self, conn, cur):
         self.cur.close()
         self.conn.close()
+        
+        
     
 ###############################################################################
 class PhotoStore:

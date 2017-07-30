@@ -17,11 +17,16 @@ def application(environ, start_response):
             fileitem = form["file"]
         else:
             raise Exception("No file given")
+        
+        # org sets the table to write to, otherwise default is used
+        org = form.getvalue("org", None)
+        
 
         title = form.getvalue("title", "")
         description = form.getvalue("description", "")
         user = form.getvalue("user", "")
         type = form.getvalue("type", "")
+        event = form.getvalue("event", None)
         f = fileitem.file
         fileName = fileitem.filename
 
@@ -34,9 +39,9 @@ def application(environ, start_response):
 
         sys.stderr.write(str(gpsPhoto.coordinates))
 
-        rowDict = {'coordinates': gpsPhoto.coordinates, 'values' : {'filename': fileName, 'guid': gpsPhoto.guid, 'title': title, 'description' : description, 'userid' : user, 'type' : type, 'url': url, 'thumburl': thumburl, 'uploadtime' : gpsPhoto.uploadtimestampz, 'phototime' : gpsPhoto.phototimestampz}}
+        rowDict = {'coordinates': gpsPhoto.coordinates, 'values' : {'filename': fileName, 'guid': gpsPhoto.guid, 'title': title, 'description' : description, 'userid' : user, 'type' : type, 'event': event, 'url': url, 'thumburl': thumburl, 'uploadtime' : gpsPhoto.uploadtimestampz, 'phototime' : gpsPhoto.phototimestampz}}
 
-        gpsDB = GpsDb()
+        gpsDB = GpsDb(organisation = org)
       
         gpsDB.insertGpsPhotoRow(rowDict=rowDict)
         

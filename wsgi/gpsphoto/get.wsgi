@@ -22,6 +22,7 @@ def application(environ, start_response):
     timezone=Europe/Amsterdam
     begindate=2016-09-26
     enddate=2016-09-26
+    org='pemantau'
     user=jsj@xs4all.nl
     type=nice
     bbox=left,bottom,right,top (decimal degrees)
@@ -45,7 +46,7 @@ def application(environ, start_response):
             timeZone = timezone(parameters['timezone'][0])
         else:
             timeZone = timezone('UTC') # if we cannot get the timezone let's assume UTC
-            sys.stderr.write('hallo')
+            #sys.stderr.write('test')
         data['timezone'] = timeZone.zone
 
         # e.g. 2016-09-26
@@ -60,6 +61,12 @@ def application(environ, start_response):
             data['enddate'] = endDate
         else:
             endDate = None
+            
+        # org determines which table the data is stored in and possibly what domain values are available.
+        if 'org' in paramters:
+            org = parameters['org'][0]
+        else:
+            org = None
         
         # email address / user name?
         if 'user' in parameters:
@@ -67,15 +74,27 @@ def application(environ, start_response):
             data['user'] = user
         else:
             user = None
+            
+        if 'event' in parameters:
+            event = parameters['event'][0]
+            data['event'] = event
+        else:
+            event = None
+            
+        if 'verified' in parameters:
+            verified = parameters['verified'][0]
+            data['verified'] = verified
+        else:
+            verified = None
         
-	# event type (domain value?)
+        # event type (domain value?)
         if 'type' in parameters:
             type = parameters['type'][0]
             data['type'] = type
         else:
             type = None
-	
-	# bounding box to return points for
+
+        # bounding box to return points for
         # ST_MakeEnvelope(left, bottom, right, top)
         if 'bbox' in parameters:
             bbox = parameters['bbox'][0]
@@ -94,7 +113,7 @@ def application(environ, start_response):
 
             #sys.stderr.write('hallo')
 
-            # get current local time of requestor
+            # get current local time of requester
             if endDate is None:
                 endDateTime= datetime.now(timeZone)
                 endDate =  endDateTime.strftime("%Y-%m-%d")  # 2016-09-26 18:02:08
@@ -113,12 +132,12 @@ def application(environ, start_response):
               'enddate':   "phototime AT TIME ZONE %(timezone)s < %(enddate)s",
               'user':      "userid ILIKE %(user)s",
               'type':      "type ILIKE %(type)s",
-              'bbox':      "ST_MakeEnvelope(%(bboxleft)f,%(bboxbottom)f,%(bboxright)f,%(bboxtop)f)"
+              'bbox':      "geom @ ST_MakeEnvelope(%(bboxleft)s,%(bboxbottom)s,%(bboxright)s,%(bboxtop)s)"
              }
         
-        gpsDB = GpsDb()
+        gpsDB = GpsDb(org = org)
 
-        columns = ['title', 'type', 'description', 'url', 'thumburl', "phototime at time zone '%s' as phototime" % timeZone.zone]
+        columns = ['guid', 'title', 'type', 'description', 'url', 'thumburl', "phototime at time zone '%s' as phototime" % timeZone.zone]
         
         results = gpsDB.getPhotoPoints(columns=columns, query=query, data=data, limit=100)
 
