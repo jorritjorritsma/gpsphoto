@@ -24,27 +24,30 @@ def application(environ, start_response):
         title = form.getvalue("title", "")
         description = form.getvalue("description", "")
         user = form.getvalue("user", "")
-        type = form.getvalue("type", "")
+        incidenttype = form.getvalue("type", "")
         event = form.getvalue("event", "")
         f = fileitem.file
-        fileName = fileitem.filename
+        orgFileName = fileitem.filename
 
         gpsPhoto = GpsPhoto(image = f)
         if not gpsPhoto.processPhoto():
             raise Exception("Photo has no reliable coordinate information")
+
+        fileName = '{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat)
         
         # defined as variable to allow this scritp to be used as well for photos without gps data
         positioningmethod = "GPS" 
         
-        url = '%s.%s' % (os.path.join(config.S3URL, gpsPhoto.guid), gpsPhoto.imageFormat)
-        thumburl = '%s.%s' % (os.path.join(config.S3URL, 'thumbs', gpsPhoto.guid), gpsPhoto.imageFormat)
+        filename = '{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat)
+        #url = '%s.%s' % (os.path.join(config.S3URL, gpsPhoto.guid), gpsPhoto.imageFormat)
+        #thumburl = '%s.%s' % (os.path.join(config.S3URL, 'thumbs', gpsPhoto.guid), gpsPhoto.imageFormat)
+        url = os.path.join(config.S3URL, filename)
+        thumburl = os.path.join(config.S3URL, 'thumbs', filename)
 
-        sys.stderr.write(str(gpsPhoto.coordinates))
+        rowDict = {'coordinates': gpsPhoto.coordinates, 'values' : {'filename': fileName, 'orgfilename': orgFileName, 'guid': gpsPhoto.guid, 'title': title, 'description' : description, 'userid' : user, 'incidenttype' : incidenttype, 'event': event, 'positioningmethod': positioningmethod, 'url': url, 'thumburl': thumburl, 'uploadtime' : gpsPhoto.uploadtimestampz, 'phototime' : gpsPhoto.phototimestampz}}
 
-        rowDict = {'coordinates': gpsPhoto.coordinates, 'values' : {'filename': fileName, 'guid': gpsPhoto.guid, 'title': title, 'description' : description, 'userid' : user, 'type' : type, 'event': event, 'positioningmethod': positioningmethod, 'url': url, 'thumburl': thumburl, 'uploadtime' : gpsPhoto.uploadtimestampz, 'phototime' : gpsPhoto.phototimestampz}}
+        gpsDB = GpsDb(org = org)
 
-        gpsDB = GpsDb(organisation = org)
-      
         gpsDB.insertGpsPhotoRow(rowDict=rowDict)
         
         photoStore = PhotoStore()

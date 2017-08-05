@@ -15,7 +15,8 @@ function html_form_code($username) {
         <div class="form-horizontal">
 
           <fieldset>
-	  <input type="hidden" name="emailaddr" value="'.$username.'">
+	      <input type="hidden" name="emailaddr" value="'.$username.'">
+	      <input type="hidden" name="event" value="testing">
 
           <!-- Form Name -->
           <!-- <legend>Report Incident by Photo Location</legend> -->
@@ -55,7 +56,7 @@ function html_form_code($username) {
           <div class="form-group">
             <label class="col-md-3 control-label" for="submit"></label>
             <div class="col-md-4">
-              <button id="submit" type="submit" class="btn btn-primary">Submit</button>
+              <button id="submit" type="submit" class="btn btn-primary">Submit!</button>
             </div>
           </div>
         <p>
@@ -86,7 +87,6 @@ function gpsphotodropzone_adding_styles() {
 	wp_enqueue_style('bootstrap');
         wp_register_style('dropzonecss', 'https://cdnjs.cloudflare.com/ajax/libs/dropzone/4.3.0/min/dropzone.min.css', __FILE__);
         wp_enqueue_style('dropzonecss');
-
 }
 	
 function gpsphotodropzone_adding_scripts() {

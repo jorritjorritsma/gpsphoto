@@ -8,7 +8,7 @@ create table photos (
             url VARCHAR(500),
             thumburl VARCHAR(500),
             bearing NUMERIC(5,2),
-            type VARCHAR(30),
+            incidenttype VARCHAR(30),
             userid VARCHAR(100),
             event VARCHAR(100),
             verified BOOLEAN,

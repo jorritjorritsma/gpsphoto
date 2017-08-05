@@ -24,7 +24,7 @@ def application(environ, start_response):
     enddate=2016-09-26
     org='pemantau'
     user=jsj@xs4all.nl
-    type=nice
+    incidenttype=nice
     bbox=left,bottom,right,top (decimal degrees)
     numberofdays=6
     f=<json|pjson|kml|kmz>
@@ -63,7 +63,7 @@ def application(environ, start_response):
             endDate = None
             
         # org determines which table the data is stored in and possibly what domain values are available.
-        if 'org' in paramters:
+        if 'org' in parameters:
             org = parameters['org'][0]
         else:
             org = None
@@ -80,19 +80,20 @@ def application(environ, start_response):
             data['event'] = event
         else:
             event = None
-            
+
+        # is the entry verified?
         if 'verified' in parameters:
             verified = parameters['verified'][0]
             data['verified'] = verified
         else:
             verified = None
         
-        # event type (domain value?)
-        if 'type' in parameters:
-            type = parameters['type'][0]
-            data['type'] = type
+        # incidenttype (domain value?)
+        if 'incidenttype' in parameters:
+            incidenttype = parameters['incidenttype'][0]
+            data['incidenttype'] = incidenttype
         else:
-            type = None
+            incidenttype = None
 
         # bounding box to return points for
         # ST_MakeEnvelope(left, bottom, right, top)
@@ -129,33 +130,39 @@ def application(environ, start_response):
             data['begindate'] = beginDate
 
         query = {'begindate': "phototime AT TIME ZONE %(timezone)s > %(begindate)s",
-              'enddate':   "phototime AT TIME ZONE %(timezone)s < %(enddate)s",
-              'user':      "userid ILIKE %(user)s",
-              'type':      "type ILIKE %(type)s",
-              'bbox':      "geom @ ST_MakeEnvelope(%(bboxleft)s,%(bboxbottom)s,%(bboxright)s,%(bboxtop)s)"
+              'enddate':        "phototime AT TIME ZONE %(timezone)s < %(enddate)s",
+              'user':           "userid ILIKE %(user)s",
+              'incidenttype':   "incidenttype ILIKE %(incidenttype)s",
+              'bbox':           "geom @ ST_MakeEnvelope(%(bboxleft)s,%(bboxbottom)s,%(bboxright)s,%(bboxtop)s)"
              }
         
         gpsDB = GpsDb(org = org)
 
-        columns = ['guid', 'title', 'type', 'description', 'url', 'thumburl', "phototime at time zone '%s' as phototime" % timeZone.zone]
+        columns = ['guid', 'title', 'incidenttype', 'description', 'url', 'thumburl', 'verified', 'positioningmethod', "phototime at time zone '%s' as phototime" % timeZone.zone]
         
         results = gpsDB.getPhotoPoints(columns=columns, query=query, data=data, limit=100)
+
+        sys.stderr.write(str(results))
 
         if f == 'json' or f == 'pjson':
             points = []
             for entry in results:
-                photoTime = entry[6].strftime('%-d %b %Y %-H:%M')
-                title = '<h1>%s (%s)</h1>' % (entry[1], entry[2])
-                image = '<p><a href="%s"><img src="%s" /></a></p>Photo taken at %s (%s)<br>' % (entry[4], entry[5], photoTime, timeZone.zone)
-                description = "<br>".join(textwrap.wrap(entry[3], 40))
+                guid = entry[1] # geometry = 0!
+                photoTime = entry[9].strftime('%-d %b %Y %-H:%M')
+                title = '<h1>%s (%s)</h1>' % (entry[2], entry[3])
+                image = '<p><a href="%s"><img src="%s" /></a></p>Photo taken at %s (%s)<br>' % (entry[5], entry[6], photoTime, timeZone.zone)
+                description = "<br>".join(textwrap.wrap(entry[4], 40))
                 popup = title + image + description
                 myFeature = geojson.Feature(geometry=entry[0],
+                                             id=entry[1],
                                              properties={"popup": popup,
                                                          "title": title,
-                                                         "eventtype": entry[2],
+                                                         "incidenttype": entry[3],
                                                          "description": description,
-                                                         "thumbnail": entry[5],
-                                                         "image": entry[4],
+                                                         "thumbnail": entry[6],
+                                                         "image": entry[5],
+                                                         "verified": entry[7],
+                                                         "positioningmethod": entry[8],
                                                          "time": photoTime,
                                                          "timezone": timeZone.zone
                                              })
@@ -179,7 +186,7 @@ def application(environ, start_response):
             kml = simplekml.Kml()
             
             for entry in results:
-                pnt = kml.newpoint(name="%s (%s)" % (entry[1], entry[2]), description='<![CDATA[<p><a href="%s"><img src="%s" /></a></p>]]>' % (entry[3], entry[4]), coords=[(entry[0]['coordinates'][0], entry[0]['coordinates'][1], entry[0]['coordinates'][2])])
+                pnt = kml.newpoint(name="%s (%s)" % (entry[2], entry[3]), description='<![CDATA[<p><a href="%s"><img src="%s" /></a></p>]]>' % (entry[4], entry[5]), coords=[(entry[0]['coordinates'][0], entry[0]['coordinates'][1], entry[0]['coordinates'][2])])
 
             output = kml.kml().encode('utf-8')
             response_headers = [('Content-Type', 'application/vnd.google-earth.kml+xml'), ('Content-Length', str(len(output)))]
