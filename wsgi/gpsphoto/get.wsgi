@@ -129,16 +129,17 @@ def application(environ, start_response):
             data['enddate'] = endDate
             data['begindate'] = beginDate
 
-        query = {'begindate': "phototime AT TIME ZONE %(timezone)s > %(begindate)s",
+        query = {'begindate': 	"phototime AT TIME ZONE %(timezone)s > %(begindate)s",
               'enddate':        "phototime AT TIME ZONE %(timezone)s < %(enddate)s",
               'user':           "userid ILIKE %(user)s",
               'incidenttype':   "incidenttype ILIKE %(incidenttype)s",
+              'event':   	"event ILIKE %(event)s",
               'bbox':           "geom @ ST_MakeEnvelope(%(bboxleft)s,%(bboxbottom)s,%(bboxright)s,%(bboxtop)s)"
              }
         
         gpsDB = GpsDb(org = org)
 
-        columns = ['guid', 'title', 'incidenttype', 'description', 'url', 'thumburl', 'verified', 'positioningmethod', "phototime at time zone '%s' as phototime" % timeZone.zone]
+        columns = ['guid', 'title', 'incidenttype', 'description', 'url', 'thumburl', 'verified', 'positioningmethod', 'event', "phototime at time zone '%s' as phototime" % timeZone.zone]
         
         results = gpsDB.getPhotoPoints(columns=columns, query=query, data=data, limit=100)
 
@@ -148,8 +149,8 @@ def application(environ, start_response):
             points = []
             for entry in results:
                 guid = entry[1] # geometry = 0!
-                photoTime = entry[9].strftime('%-d %b %Y %-H:%M')
-                title = '<h1>%s (%s)</h1>' % (entry[2], entry[3])
+                photoTime = entry[10].strftime('%-d %b %Y %-H:%M')
+                title = '<h1>{} ({})</h1>Event: {}<br>'.format(entry[2], entry[3], entry[9])
                 image = '<p><a href="%s"><img src="%s" /></a></p>Photo taken at %s (%s)<br>' % (entry[5], entry[6], photoTime, timeZone.zone)
                 description = "<br>".join(textwrap.wrap(entry[4], 40))
                 popup = title + image + description
@@ -163,6 +164,7 @@ def application(environ, start_response):
                                                          "image": entry[5],
                                                          "verified": entry[7],
                                                          "positioningmethod": entry[8],
+                                                         "event": entry[9],
                                                          "time": photoTime,
                                                          "timezone": timeZone.zone
                                              })
