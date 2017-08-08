@@ -8,7 +8,9 @@ Author: Jorrit Jorritsma
 Author URI: http://jorritsma.cc
 */
 
-function gpsphotomap_html_form_code($username) {
+$site = "http://gpsphoto.fritz.box";
+
+function gpsphotomap_html_form_code($site, $username) {
     $form = '
     
     <!-- <script id="jsonfile" src="http://gpsphoto.fritz.box/get?f=pjson" type="text/javascript"></script> -->
@@ -20,7 +22,7 @@ function gpsphotomap_html_form_code($username) {
 <!-- Form Name -->
 <!-- <legend>Filter Events</legend> -->
 
-<input name="baseurl" id="baseurl" value="http://gpsphoto.fritz.box/get" type="hidden">
+<input name="baseurl" id="baseurl" value="' . $site . '" type="hidden">
 <input name="timezone" id="timezone" value="" type="hidden">
 <!-- hidden user field for not changing js code but not including user filtering
 Probably needs checking on js side to dynamically build query url -->
@@ -95,11 +97,11 @@ Probably needs checking on js side to dynamically build query url -->
     return($form);
 }
 
-function gpsphotomap_shortcode() {
+function gpsphotomap_shortcode($site) {
     ob_start();
     $current_user = wp_get_current_user();
     $username = $current_user->user_email;
-    $form = gpsphotomap_html_form_code($username);
+    $form = gpsphotomap_html_form_code($site, $username);
     echo $form;
     return ob_get_clean();
 }
@@ -113,7 +115,7 @@ function gpsphotomap_adding_styles() {
     wp_enqueue_style('bootstrap');    
 }
     
-function gpsphotomap_adding_scripts() {
+function gpsphotomap_adding_scripts($site) {
     wp_register_script('leaflet', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js', __FILE__);
     wp_enqueue_script('leaflet');
     wp_register_script('pikaday', 'https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.5.1/pikaday.js', __FILE__);
@@ -122,6 +124,10 @@ function gpsphotomap_adding_scripts() {
     wp_enqueue_script('jstz');
     wp_register_script('gpsphotomap', plugins_url('gpsphotomap.js', __FILE__), '', '',true);
     wp_enqueue_script('gpsphotomap');
+    $dataToBePassed = array(
+        'site'            => $site);
+        wp_localize_script( 'gpsphotomap', 'php_vars', $dataToBePassed );
+
 }
 
 add_action( 'wp_enqueue_scripts', 'gpsphotomap_adding_scripts' );

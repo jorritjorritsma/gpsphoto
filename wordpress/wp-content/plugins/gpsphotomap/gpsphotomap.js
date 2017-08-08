@@ -127,7 +127,8 @@ new Pikaday({
 
 
 var mytimezone=jstz.determine().name();
-var jsonurl = 'http://gpsphoto.fritz.box/get?f=pjson&timezone=' + mytimezone;
+//var jsonurl = 'http://gpsphoto.fritz.box/get?f=pjson&timezone=' + mytimezone;
+var jsonurl = php_vars.site + '/get?f=pjson&timezone=' + mytimezone;
 
 (function(d, script) {
     script = d.createElement('script');

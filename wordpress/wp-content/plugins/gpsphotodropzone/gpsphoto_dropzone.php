@@ -6,11 +6,13 @@ Description: Plugin to upload photos to the gpsphoto application
 Version: 1.0
 Author: Jorrit Jorritsma
 Author URI: http://jorritsma.cc
-*/
+ */
 
-function html_form_code($username) {
+$site = "http://gpsphoto.fritz.box";
+
+function html_form_code($site, $username) {
     $form = '
-        <div id="mydropzone"><form id="myform" action="/upload" class="dropzone needsclick">
+        <div id="mydropzone"><form id="myform" action="' . $site . '/upload" class="dropzone needsclick">
 
         <div class="form-horizontal">
 
@@ -72,11 +74,11 @@ function html_form_code($username) {
     return($form);
 }
 
-function gpsphotodropzone_shortcode() {
+function gpsphotodropzone_shortcode($site) {
 	ob_start();
 	$current_user = wp_get_current_user();
 	$username = $current_user->user_email;
-	$form = html_form_code($username);
+	$form = html_form_code($site, $username);
 	echo $form;
 	return ob_get_clean();
 }
@@ -89,11 +91,14 @@ function gpsphotodropzone_adding_styles() {
         wp_enqueue_style('dropzonecss');
 }
 	
-function gpsphotodropzone_adding_scripts() {
+function gpsphotodropzone_adding_scripts($site) {
 	wp_register_script('dropzoneoptions', plugins_url('dropzone/dropzone_options.js', __FILE__), '', '', true);
 	wp_enqueue_script('dropzoneoptions');
         wp_register_script('dropzone', 'https://cdnjs.cloudflare.com/ajax/libs/dropzone/4.3.0/min/dropzone.min.js', __FILE__);
 	wp_enqueue_script('dropzone');
+	$dataToBePassed = array(
+		'site'            => 'http://gpsphoto.fritz.box');
+		wp_localize_script( 'dropzone', 'php_vars', $dataToBePassed );
 }
 
 add_action( 'wp_enqueue_scripts', 'gpsphotodropzone_adding_scripts' );
