@@ -73,6 +73,14 @@ Probably needs checking on js side to dynamically build query url -->
   </div>
 </div>
 
+<!-- Select Basic -->
+<div class="form-group">
+  <label class="col-md-4 control-label" for="event">Event</label>
+  <div class="col-md-4">
+    <input type="text" id="Event" name="event" class="form-control">
+  </div>
+</div>
+
 <!-- Text input-->
 <!--
 <div class="form-group">
@@ -82,6 +90,19 @@ Probably needs checking on js side to dynamically build query url -->
   </div>
 </div>
 -->
+
+<!-- Select Basic -->
+<div class="form-group">
+  <label class="col-md-4 control-label" for="verified">Verified submissions only</label>
+  <div class="col-md-4">
+    <select id="Verified" name="verified" class="form-control">
+        <option selected="selected" value="">Both</option>
+        <option value="true">Verified</option>
+        <option value="false">Not verified</option>
+    </select>
+  </div>
+</div>
+
 <!-- Button -->
 <div class="form-group">
   <label class="col-md-4 control-label" for="submitbutton"></label>

@@ -29,6 +29,7 @@ def application(environ, start_response):
     numberofdays=6
     f=<json|pjson|kml|kmz>
     '''
+    sys.stderr.write('hallo')
     
     data = {}
     query = {}
@@ -80,6 +81,12 @@ def application(environ, start_response):
             data['event'] = event
         else:
             event = None
+
+        if 'verified' in parameters:
+            verified = parameters['verified'][0]
+            data['verified'] = verified
+        else:
+            verified = None
 
         # is the entry verified?
         if 'verified' in parameters:
@@ -133,7 +140,8 @@ def application(environ, start_response):
               'enddate':        "phototime AT TIME ZONE %(timezone)s < %(enddate)s",
               'user':           "userid ILIKE %(user)s",
               'incidenttype':   "incidenttype ILIKE %(incidenttype)s",
-              'event':   	"event ILIKE %(event)s",
+              'event':   	    "event ILIKE %(event)s",
+              'verified':       "verified = %(verified)s",
               'bbox':           "geom @ ST_MakeEnvelope(%(bboxleft)s,%(bboxbottom)s,%(bboxright)s,%(bboxtop)s)"
              }
         
