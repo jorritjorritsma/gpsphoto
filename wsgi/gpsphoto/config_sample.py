@@ -7,6 +7,7 @@ DB_NAME = ''                # DB Name (postgresql)
 DB_USER = ''                # DB User name
 DB_PASSWD = ''              # DB Password
 DB_PHOTOTABLE = ''          # table name
+DB_RECORDLIMIT = 2000       # nr of records to return 'ALL' returns all records
 KEEP_EXIF = True|False      # keep exif header in saved photos
 PGP_PRIVACY = True|False    # keep original exif header as well as submitter in
                             # gpg'd message

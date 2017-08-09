@@ -87,10 +87,11 @@ function getFormData() {
   var numberofdays = document.getElementsByName("numberofdays")[0].value;
   var type = document.getElementsByName("type")[0].value;
   var user = document.getElementsByName("user")[0].value;
-  var baseurl = document.getElementsByName("baseurl")[0].value;
   var timezone = document.getElementsByName("timezone")[0].value;
+  var verified = document.getElementsByName("verified")[0].value;
+  var event = document.getElementsByName("event")[0].value;
   
-  url = baseurl + "?enddate=" + enddate + "&numberofdays=" + numberofdays + "&type=" + type + "&user=" + user + "&timezone=" + timezone + "&f=pjson";
+  url = php_vars.site + "/get?enddate=" + enddate + "&numberofdays=" + numberofdays + "&type=" + type + "&user=" + user + "&timezone=" + timezone + "&event=" + event + "&verified=" + verified + "&f=pjson";
   
   function getNewJSON(src, callback) {
     newjsonfile = document.createElement("script");
@@ -100,6 +101,7 @@ function getFormData() {
     newjsonfile.onload = function(){
       callback(mapitems);
     };
+    //alert(JSON.stringify(mapitems))
     document.getElementsByTagName('head')[0].appendChild(newjsonfile);
   }
 
@@ -125,7 +127,6 @@ new Pikaday({
   }
 });
 
-
 var mytimezone=jstz.determine().name();
 //var jsonurl = 'http://gpsphoto.fritz.box/get?f=pjson&timezone=' + mytimezone;
 var jsonurl = php_vars.site + '/get?f=pjson&timezone=' + mytimezone;
@@ -145,5 +146,4 @@ var jsonurl = php_vars.site + '/get?f=pjson&timezone=' + mytimezone;
 
 
 qform.elements.timezone.value = mytimezone
-
 

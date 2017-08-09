@@ -6,7 +6,10 @@ import cgitb; cgitb.enable()
 
 from pprint import pprint
 
-sys.path.append(os.path.dirname(__file__))
+libdir = os.path.dirname(__file__).replace('/admin', '')
+sys.path.append(libdir)
+sys.path.append(libdir)
+
 from gpsphoto import GpsPhoto, GpsDb, PhotoStore
 import config
 

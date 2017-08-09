@@ -11,22 +11,19 @@ Author URI: http://jorritsma.cc
 $site = "http://gpsphoto.fritz.box";
 
 function gpsphotomap_html_form_code($site, $username) {
+    
     $form = '
     
-    <!-- <script id="jsonfile" src="http://gpsphoto.fritz.box/get?f=pjson" type="text/javascript"></script> -->
         <div id="mapid" style="width: 800; height: 600px;"></div>
-
         <form class="form-horizontal" id="qform" action="#" name="qform">
 <fieldset>
 
 <!-- Form Name -->
 <!-- <legend>Filter Events</legend> -->
 
-<input name="baseurl" id="baseurl" value="' . $site . '" type="hidden">
+<!-- <input name="baseurl" id="baseurl" value="https://gpsphotomap.com/get" type="hidden"> -->
+<input name="baseurl" id="baseurl" value="' . $site . '/get" type="hidden">
 <input name="timezone" id="timezone" value="" type="hidden">
-<!-- hidden user field for not changing js code but not including user filtering
-Probably needs checking on js side to dynamically build query url -->
-<input name="user" id="user" value="" type="hidden">
 
 
 <!-- Text input-->
@@ -59,7 +56,7 @@ Probably needs checking on js side to dynamically build query url -->
 
 <!-- Select Basic -->
 <div class="form-group">
-  <label class="col-md-4 control-label" for="type">Event type</label>
+  <label class="col-md-4 control-label" for="type">Incident type</label>
   <div class="col-md-4">
     <select id="Type" name="type" class="form-control">
         <option selected="selected" value="">All</option>
@@ -82,14 +79,12 @@ Probably needs checking on js side to dynamically build query url -->
 </div>
 
 <!-- Text input-->
-<!--
 <div class="form-group">
   <label class="col-md-4 control-label" for="user">Submitter</label>  
   <div class="col-md-4">
   <input id="user" name="user" placeholder="Submitters user name" class="form-control input-md" type="text">
   </div>
 </div>
--->
 
 <!-- Select Basic -->
 <div class="form-group">
@@ -146,8 +141,8 @@ function gpsphotomap_adding_scripts($site) {
     wp_register_script('gpsphotomap', plugins_url('gpsphotomap.js', __FILE__), '', '',true);
     wp_enqueue_script('gpsphotomap');
     $dataToBePassed = array(
-        'site'            => $site);
-        wp_localize_script( 'gpsphotomap', 'php_vars', $dataToBePassed );
+    'site'            => $site);
+    wp_localize_script( 'gpsphotomap', 'php_vars', $dataToBePassed );
 
 }
 

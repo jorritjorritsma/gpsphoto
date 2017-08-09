@@ -322,8 +322,7 @@ class GpsDb:
         #                       'z' : <z>,
         #                       'bearing' : <compass bearing>,
         #                       'crs' : <map datum>},
-        # 'values' : {  'guid': <guid>,
-        #               'title': <title>,
+        # 'values' : {  'title': <title>,
         #               'description': <description>,
         #               'incidenttype': <cartographic type>,
         #               'event': <name of event>,
@@ -335,6 +334,7 @@ class GpsDb:
             print("Trying to update a record without specifying a guid")
             return(None)
         try:
+            rowDict['guid'] = guid
             (sql, data) = self._updateOrModifySql(rowDict, 'update')
             self.cur.execute(sql, data, )
             self.conn.commit()
@@ -345,13 +345,13 @@ class GpsDb:
 
     def _updateOrModifySql(self, rowDict, type):
         # rowdict = {
+        # 'guid' :      guid,
         # 'coordinates' : {     'lat' : <latitude>,
         #                       'lon' : <longitude>,
         #                       'z' : <z>,
         #                       'bearing' : <compass bearing>,
         #                       'crs' : <map datum>},
-        # 'values' : {  'guid': <guid>
-        #               'filename': <photo name>,
+        # 'values' : {  'filename': <photo name>,
         #               'title': <title>,
         #               'description': <description>,
         #               'url': <photo url>,
@@ -396,7 +396,7 @@ class GpsDb:
             # bearing was considered part of the geometry, hence added here as normal attribute
             rowDict['values']['bearing'] = rowDict['coordinates']['bearing']
             fields['bearing'] = '%s'
-        
+
         columns = [] # columns to build sql statement
         values = [] # fields to build sql statement
         data = [] # data (tuple) to use with sql execute
@@ -413,16 +413,14 @@ class GpsDb:
         elif type == 'update':
             # We'll be overwriting the guid with itself, but that should be ok
             sql = "UPDATE {} SET ({}) = ({}) WHERE guid = %s".format(self.gpsPhotoTable, ','.join(columns), ','.join(values))
-            data.append(rowDict['values']['guid'])
+            data.append(rowDict['guid'])
         else:
             return(None)
         
         # let's for now see what sql we are getting
-        print(sql)
-        print(str(tuple(data)))
         return(sql, tuple(data))
 
-    def getPhotoPoints(self, columns=[], orderColumn='phototime', order='DESC', query=None, data=None, limit='ALL'):
+    def getPhotoPoints(self, columns=[], orderColumn='phototime', order='DESC', query=None, data=None, limit=None):
         '''
         columns[]:   array of column names to get back from query
         orderColumn: column to order results by
@@ -430,8 +428,11 @@ class GpsDb:
         query:       dict of query stubs to be AND-ed together to one query
         data:        dict with values to fill the parameters in query dict stubs.
                      The keys of data entries must match the parameters in the stubs.
-        limit:       Limit the amount of results returned by a number (default: ALL)
+        limit:       Limit the amount of results returned by a number ('ALL' gets all records)
         '''
+
+        if limit is None:
+            limit = self.config.DB_LIMITRECORDS
       
         queryArray = []
         if query:
