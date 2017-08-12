@@ -28,6 +28,8 @@ def application(environ, start_response):
         # org sets the table to write to, otherwise default is used
         org = form.getvalue("org", "")
 
+        verified = form.getvalue("verified", "")
+        
         # now we want to send a form for filling in
         # only guid and possibly org are populated
         if guid == "":
@@ -49,19 +51,16 @@ def application(environ, start_response):
                     if record[fields.index(field)] == True:
                         out += '<input type="checkbox" name="{}" value="true" checked>{}<br>'.format(field, fieldsDef[field][0])
                     else:
-                        out += '<input type="checkbox" name="{}" value="true">{}<br>'.format(field, fieldsDef[field][0],field)
+                        out += '<input type="checkbox" name="{}" value="true">{}<br>'.format(field, fieldsDef[field][0])
             out += '<br><br><input type="submit" value="Submit"></form>'
-
-        else:
+        elif verified == 'true' or verified == 'false':
             # we recieved an update
-            verified = form.getvalue("verified", "false")
-            
             rowDict = {'values' : {'verified': verified}}
 
-            sys.stderr.write('boer\n')
-        
             gpsDB.updateGpsPhotoRow(guid=guid, rowDict=rowDict)
             out = "{result: 'success'}"
+	else:
+            raise Exception("Incorrect parameters provided")
         
         status = '200 OK'
         response_headers = [('Content-Type', 'text/html'), ('Content-Length', str(len(out)))]

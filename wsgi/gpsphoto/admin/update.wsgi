@@ -59,7 +59,7 @@ def application(environ, start_response):
                     if record[fields.index(field)] == True:
                         out += '<input type="checkbox" name="{}" value="true" checked>{}<br>'.format(field, fieldsDef[field][0])
                     else:
-                        out += '<input type="checkbox" name="{}" value="true">{}<br>'.format(field, fieldsDef[field][0],field)
+                        out += '<input type="checkbox" name="{}" value="true">{}<br>'.format(field, fieldsDef[field][0])
             out += 'Longitude (-180.0 - 180.0)<br><input type="text" name="lon" value=""><br>Latitude (-90.0 - 90.0)<br><input type="text" name="lat" value=""><br><br><input type="submit" value="Submit"></form>'
 
         else:
