@@ -8,10 +8,9 @@ Author: Jorrit Jorritsma
 Author URI: http://jorritsma.cc
 */
 
-$site = "http://gpsphoto.fritz.box";
+$site = "https://gpsphotomap.com";
 
 function gpsphotomap_html_form_code($site, $username) {
-    
     $form = '
     
         <div id="mapid" style="width: 800; height: 600px;"></div>
@@ -21,10 +20,7 @@ function gpsphotomap_html_form_code($site, $username) {
 <!-- Form Name -->
 <!-- <legend>Filter Events</legend> -->
 
-<!-- <input name="baseurl" id="baseurl" value="https://gpsphotomap.com/get" type="hidden"> -->
-<input name="baseurl" id="baseurl" value="' . $site . '/get" type="hidden">
 <input name="timezone" id="timezone" value="" type="hidden">
-
 
 <!-- Text input-->
 <div class="form-group">
@@ -88,10 +84,10 @@ function gpsphotomap_html_form_code($site, $username) {
 
 <!-- Select Basic -->
 <div class="form-group">
-  <label class="col-md-4 control-label" for="verified">Verified submissions only</label>
+  <label class="col-md-4 control-label" for="verified">Verified submissions</label>
   <div class="col-md-4">
     <select id="Verified" name="verified" class="form-control">
-        <option selected="selected" value="">Both</option>
+        <option selected="selected" value="">All</option>
         <option value="true">Verified</option>
         <option value="false">Not verified</option>
     </select>
@@ -141,7 +137,7 @@ function gpsphotomap_adding_scripts($site) {
     wp_register_script('gpsphotomap', plugins_url('gpsphotomap.js', __FILE__), '', '',true);
     wp_enqueue_script('gpsphotomap');
     $dataToBePassed = array(
-    'site'            => $site);
+        'site'            => $site);
     wp_localize_script( 'gpsphotomap', 'php_vars', $dataToBePassed );
 
 }

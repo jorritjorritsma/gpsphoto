@@ -6,15 +6,15 @@ var mapboxUrl = "https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_tok
       'Imagery © <a href="http://mapbox.com">Mapbox</a>';
 
 // opentopo layer: free but not very stable
-var opentopoUrl = 'http://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+var opentopoUrl = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
     opentopoAttr = 'Map data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)';
 
 // osm layer: free and fast
-var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+var osmUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     osmAttr = '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
 // esri world imagery layer: free and fast
-var esriWorldImageryUrl = 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+var esriWorldImageryUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     esriWorldImageryAttr = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
 
 // let's define the layers we can add as basemaps
@@ -24,8 +24,12 @@ var satellite = L.tileLayer(mapboxUrl, {id: 'mapbox.satellite', maxZoom: 18, att
     esriWorldImagery =  L.tileLayer(esriWorldImageryUrl, {maxZoom: 19, attribution: esriWorldImageryAttr});
 
 var mymap = L.map("mapid", {
-    center: [51.755, 4.373],
-    zoom: 10,
+    // location in NL
+    //center: [51.755, 4.373],
+    //zoom: 10,
+    // All of Malaysia
+    center: [3.82, 109.16],
+    zoom: 6,
     layers: [osm]
 });
 
