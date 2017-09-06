@@ -1,15 +1,15 @@
 #!/bin/env python
 from webob import Request, Response
-from webob.multidict import (NestedMultiDict, MultiDict)
-import cgi, os, sys, uuid
-from cgi import parse_qs
+import os
+import sys
+import uuid
+import json
 from datetime import datetime, timedelta
 from dateutil import tz
 import textwrap
 import geojson
 import simplekml
 from pytz import timezone
-import json
 
 from gpsphoto import GpsDb
 
@@ -29,107 +29,99 @@ def application(environ, start_response):
     numberofdays=6
     f=<json|pjson|kml|kmz>
     '''
-    sys.stderr.write('hallo')
+    req = Request(environ)
+    res = Response()
     
     data = {}
     query = {}
     try:
-        parameters = parse_qs(environ.get('QUERY_STRING', ''))
-
         # f : json, pjson, kml, kmz
-        if  'f' in parameters:
-            f = parameters['f'][0].lower()
+        if  'f' in req.params:
+            f = req.GET['f'].lower()
         else:
             f = 'json'
 
         # tzdata compatible time zone
-        if  'timezone' in parameters:
-            timeZone = timezone(parameters['timezone'][0])
+        if  'timezone' in req.params:
+            timeZone = timezone(req.GET['timezone'])
         else:
             timeZone = timezone('UTC') # if we cannot get the timezone let's assume UTC
-            #sys.stderr.write('test')
         data['timezone'] = timeZone.zone
 
         # e.g. 2016-09-26
-        if 'begindate' in parameters:
-            beginDate = parameters['begindate'][0]
+        if 'begindate' in req.params and req.params['begindate'] != "":
+            beginDate = req.params['begindate']
             data['begindate'] = beginDate
         else:
             beginDate = None
         
-        if 'enddate' in parameters:
-            endDate = parameters['enddate'][0]
+        if 'enddate' in req.params and req.params['enddate'] != "":
+            endDate = req.params['enddate']
             data['enddate'] = endDate
         else:
             endDate = None
             
         # org determines which table the data is stored in and possibly what domain values are available.
-        if 'org' in parameters:
-            org = parameters['org'][0]
+        if 'org' in req.params and req.params['org'] != "":
+            org = req.params['org']
         else:
             org = None
         
         # email address / user name?
-        if 'user' in parameters:
-            user = parameters['user'][0]
+        if 'user' in req.params and req.params['user'] != "":
+            user = req.params['user']
             data['user'] = user
         else:
             user = None
             
-        if 'event' in parameters:
-            event = parameters['event'][0]
+        if 'event' in req.params and req.params['event'] != "":
+            event = req.params['event']
             data['event'] = event
         else:
             event = None
 
-        if 'verified' in parameters:
-            verified = parameters['verified'][0]
+        # is the entry verified?
+        if 'verified' in req.params and req.params['verified'] != "":
+            verified = req.params['verified']
             data['verified'] = verified
         else:
             verified = None
 
-        # is the entry verified?
-        if 'verified' in parameters:
-            verified = parameters['verified'][0]
-            data['verified'] = verified
-        else:
-            verified = None
-        
         # incidenttype (domain value?)
-        if 'incidenttype' in parameters:
-            incidenttype = parameters['incidenttype'][0]
+        if 'type' in req.params and req.params['type'] != "":
+            incidenttype = req.params['type']
             data['incidenttype'] = incidenttype
         else:
             incidenttype = None
 
         # bounding box to return points for
         # ST_MakeEnvelope(left, bottom, right, top)
-        if 'bbox' in parameters:
-            bbox = parameters['bbox'][0]
+        if 'bbox' in req.params:
+            bbox = req.params['bbox']
             data['bbox'] = True
             data['bboxleft'] =   float(bbox.split(',')[0])
             data['bboxbottom'] = float(bbox.split(',')[1])
             data['bboxright'] =   float(bbox.split(',')[2])
             data['bboxtop'] =    float(bbox.split(',')[3])
         else:
-            bbox = None
+            bbox = ""
 
         # Number of days ago.... what does that actually mean....?
         # We take the view of the user
-        if 'numberofdays' in parameters:
-            numberofdays = parameters['numberofdays'][0]
+        if 'numberofdays' in req.params and req.params['numberofdays'] != "":
+            numberofdays = req.params['numberofdays']
 
             #sys.stderr.write('hallo')
 
             # get current local time of requester
-            if endDate is None:
+            if endDate == "":
                 endDateTime= datetime.now(timeZone)
                 endDate =  endDateTime.strftime("%Y-%m-%d")  # 2016-09-26 18:02:08
             else:
                 endDateTime = datetime.strptime(endDate, "%Y-%m-%d")
 
             # x days ago in whatever timezone
-            if beginDate is None:
+            if beginDate is "":
                 beginDateTime = endDateTime - timedelta(days=int(numberofdays))
                 beginDate = beginDateTime.strftime("%Y-%m-%d")
 
@@ -187,26 +179,21 @@ def application(environ, start_response):
             featurecollection = geojson.FeatureCollection(points, crs=crs)
             
             if f == 'pjson':
-                output = "mapitems=" + geojson.dumps(featurecollection)
-                response_headers = [('Content-Type', 'application/javascript'), ('Content-Length', str(len(output)))]
+                res.body = "mapitems=" + geojson.dumps(featurecollection)
+                res.headerlist = [('Content-Type', 'application/javascript')]
             else: # normal geojson
-                output = geojson.dumps(featurecollection)
-                response_headers = [('Content-Type', 'application/json'), ('Content-Length', str(len(output)))]
+                res.body = geojson.dumps(featurecollection)
+                res.headerlist = [('Content-Type', 'application/json')]
         elif f == 'kml' or f == 'kmz':
             kml = simplekml.Kml()
-            
             for entry in results:
                 pnt = kml.newpoint(name="%s (%s)" % (entry[2], entry[3]), description='<![CDATA[<p><a href="%s"><img src="%s" /></a></p>]]>' % (entry[4], entry[5]), coords=[(entry[0]['coordinates'][0], entry[0]['coordinates'][1], entry[0]['coordinates'][2])])
 
-            output = kml.kml().encode('utf-8')
-            response_headers = [('Content-Type', 'application/vnd.google-earth.kml+xml'), ('Content-Length', str(len(output)))]
-
+            res.body = kml.kml().encode('utf-8')
+            res.headerlist = [('Content-Type', 'application/vnd.google-earth.kml+xml')]
         else:
             raise() # we should not get here, so raise an exception
-        
-        status = '200 OK'
-        start_response(status, response_headers)
-        return [output]
+        return res(environ, start_response)
     except Exception, e:
         exc_obj = sys.exc_info()[1]
         exc_tb = sys.exc_info()[2]
@@ -214,7 +201,8 @@ def application(environ, start_response):
         sys.stderr.write("%s\n" % str(e))
         sys.stderr.write("%s line %s\n" % (str(fname), str(exc_tb.tb_lineno)))
 
-        status = '400 Bad Request'
-        response_headers = [('Content-Type', 'text/plain'), ('Content-Length', str(len(str(e))))]
-        start_response(status, response_headers)
-        return (str(e))
+        res.status = 400
+        res.headerlist = [('Content-type', 'text/html')]
+        res.body = str(e)
+        return res(environ, start_response)
+

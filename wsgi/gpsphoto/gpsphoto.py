@@ -205,7 +205,7 @@ class GpsPhoto:
 
     def getUploadTimeStampZ(self):
         try:
-            self.uploadtimestampz = '{:%Y-%m-%d %H:%M:%S} UTC'.format(datetime.datetime.now())
+            self.uploadtimestampz = '{:%Y-%m-%d %H:%M:%S} UTC'.format(datetime.datetime.utcnow())
             return (True)
         except Exception, e:
             print 'failed getUploadTimeStampZ'
@@ -536,22 +536,23 @@ class PhotoStore:
             print("%s line %s\n" % (str(fname), str(exc_tb.tb_lineno)))
             raise Exception("failed to delete file from S3")
     
-    def storeImage(self, image=None, fileName=None, imgFormat=None, exif=None):
+    def storeImage(self, image=None, fileName=None, imgFormat=None, exif=None, keepExif=False, makePublic=False):
         # image is a PIL Image object, fileName the full name including path on how it should be stored
         import StringIO
-        if image is not None and fileName is not None and imgFormat is not None and exif is not None:
+        if image is not None and fileName is not None and imgFormat is not None:
             k = Key(self.bucket)
             k.key = fileName
             try:
                 output = StringIO.StringIO()
-                if self.config.KEEP_EXIF:
+                if keepExif: # True
                     image.save(output, format=imgFormat, exif=exif)
-                else:
+                else: # False
                     image.save(output, format=imgFormat)
                 fileContents = output.getvalue()
                 output.close()
                 k.set_contents_from_string(fileContents)
-                k.make_public()
+                if makePublic: # True
+                    k.make_public()
             except Exception, e:
                 exc_obj = sys.exc_info()[1]
                 exc_tb = sys.exc_info()[2]
@@ -559,5 +560,12 @@ class PhotoStore:
                 print str(e)
                 print("%s line %s\n" % (str(fname), str(exc_tb.tb_lineno)))
                 raise Exception("failed storeImage")
+            return "{}/{}".format(self.config.S3URL, fileName)
         else:
             raise Exception("No suitable image provided")
+
+
+
+
+
+
