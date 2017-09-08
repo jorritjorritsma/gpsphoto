@@ -21,6 +21,7 @@ function gpsphotomap_html_form_code($site, $username) {
 <!-- <legend>Filter Events</legend> -->
 
 <input name="timezone" id="timezone" value="" type="hidden">
+<input name="org" id="org" value="" type="hidden">
 
 <!-- Text input-->
 <div class="form-group">

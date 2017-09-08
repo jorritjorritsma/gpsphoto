@@ -87,6 +87,7 @@ function addLayerToMap(map, layer) {
 	
 
 function getFormData() {
+  var org = document.getElementsByName("org")[0].value;
   var enddate = document.getElementsByName("enddate")[0].value;
   var numberofdays = document.getElementsByName("numberofdays")[0].value;
   var type = document.getElementsByName("type")[0].value;
@@ -95,7 +96,7 @@ function getFormData() {
   var verified = document.getElementsByName("verified")[0].value;
   var event = document.getElementsByName("event")[0].value;
   
-  url = php_vars.site + "/get?enddate=" + enddate + "&numberofdays=" + numberofdays + "&type=" + type + "&user=" + user + "&timezone=" + timezone + "&event=" + event + "&verified=" + verified + "&f=pjson";
+  url = php_vars.site + "/get?org=" + org + "&enddate=" + enddate + "&numberofdays=" + numberofdays + "&type=" + type + "&user=" + user + "&timezone=" + timezone + "&event=" + event + "&verified=" + verified + "&f=pjson";
   
   function getNewJSON(src, callback) {
     newjsonfile = document.createElement("script");
@@ -132,8 +133,8 @@ new Pikaday({
 });
 
 var mytimezone=jstz.determine().name();
-//var jsonurl = 'http://gpsphoto.fritz.box/get?f=pjson&timezone=' + mytimezone;
-var jsonurl = php_vars.site + '/get?f=pjson&timezone=' + mytimezone;
+var org = document.getElementsByName("org")[0].value;
+var jsonurl = php_vars.site + '/get?org=' + org + '&f=pjson&timezone=' + mytimezone;
 
 (function(d, script) {
     script = d.createElement('script');
