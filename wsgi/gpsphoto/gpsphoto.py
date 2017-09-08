@@ -502,18 +502,23 @@ class GpsDb:
     
 ###############################################################################
 class PhotoStore:
-    def __init__(self):
+    def __init__(self, org = None):
         sys.path.append(os.path.dirname(__file__))
         import config
         self.config = config
+
+        if org is None or org == '':
+            self.bucketName = self.config.BUCKET['default']
+        else:
+            self.bucketName = self.config.BUCKET[org]
         
         self.connS3 = boto.connect_s3(self.config.ID,self.config.KEY)
     
         try:
-            self.bucket = self.connS3.get_bucket(self.config.BUCKET)
+            self.bucket = self.connS3.get_bucket(self.bucketName)
         except:
             try:
-                self.bucket = self.connS3.create_bucket(self.config.BUCKET)
+                self.bucket = self.connS3.create_bucket(self.bucketName)
             except Exception, e:
                 exc_obj = sys.exc_info()[1]
                 exc_tb = sys.exc_info()[2]
@@ -560,7 +565,7 @@ class PhotoStore:
                 print str(e)
                 print("%s line %s\n" % (str(fname), str(exc_tb.tb_lineno)))
                 raise Exception("failed storeImage")
-            return "{}/{}".format(self.config.S3URL, fileName)
+            return "{}/{}/{}".format(self.config.S3URL, self.bucketName, fileName)
         else:
             raise Exception("No suitable image provided")
 

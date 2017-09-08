@@ -111,7 +111,7 @@ def application(environ, start_response):
         filename = '{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat)
         
         # Store photo
-        photoStore = PhotoStore()
+        photoStore = PhotoStore(org=org)
         # Store public photo - no exif included
         url = photoStore.storeImage(image = gpsPhoto.resizedImage,
             fileName = '{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat),
@@ -139,9 +139,9 @@ def application(environ, start_response):
             imgFormat = gpsPhoto.imageFormat,
             makePublic=True)
 
-        url = os.path.join(config.S3URL, filename)
-        thumburl = os.path.join(config.S3URL, 'thumbs', filename)
-        withexifurl = os.path.join(config.S3URL, 'withexif', filename)
+        #url = os.path.join(config.S3URL, filename)
+        #thumburl = os.path.join(config.S3URL, 'thumbs', filename)
+        #withexifurl = os.path.join(config.S3URL, 'withexif', filename)
 
         # Store record in DB
         gpsDB = GpsDb(org = org)
