@@ -120,7 +120,7 @@ def application(environ, start_response):
         
         # Let's see if we want to store photo with exif for evidence purposes
         # these will not be made public, probably we need en admin cgi to serve them up
-        if org is None:
+        if org is None or org == "":
             keepExif = config.KEEP_EXIF['default']
         else:
             keepExif = config.KEEP_EXIF[org]
