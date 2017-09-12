@@ -51,7 +51,7 @@ def application(environ, start_response):
         gpsDB = GpsDb(org = org)
         record = gpsDB.getGpsPhotoRow(guid, fields)
         if len(record) != 1:
-            out='{"result": "{} does not exist"}'.format(guid)
+            out='{{"result": "{} does not exist"}}'.format(guid)
         else:
             nrArgs = len(req.params)
             # called without submitted form, let's produce one

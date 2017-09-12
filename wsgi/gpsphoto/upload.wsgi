@@ -169,9 +169,8 @@ def application(environ, start_response):
                         'oidc_claim_profile': oidc_claim_profile,
                         'uploadtime': gpsPhoto.uploadtimestampz,
                         'phototime': gpsPhoto.phototimestampz}}
-
         gpsDB.insertGpsPhotoRow(rowDict=rowDict)
-        res.body = '{"guid": "{}"}'.format(gpsPhoto.guid)
+        res.body = '{{"guid": "{}"}}'.format(gpsPhoto.guid)
         return res(environ, start_response)
     except Exception, e:
         exc_obj = sys.exc_info()[1]
