@@ -31,18 +31,15 @@ def application(environ, start_response):
             org = req.params['org']
         except:
             org = ""
-        # hidden value in form to check if it was actually sure
-        # work around stupid checkbox implementation
-        try: 
-            sure = req.params['sure']
+        try: # work around stupid checkbox implementation
+            submitted = req.params['submitted']
         except:
-            sure = ""
-        # verified is checkbox hence only an argument when checked, so if the form is sure
-        # and verified is empty.... it must be unchecked - false
+            submitted = ""
+        # hidden value in form to check if it was actually submitted
         try:
             verified = req.params['verified']
         except:
-            if sure:
+            if submitted:
                 verified = 'false'
             else:
                 verified = ""
@@ -54,12 +51,12 @@ def application(environ, start_response):
         gpsDB = GpsDb(org = org)
         record = gpsDB.getGpsPhotoRow(guid, fields)
         if len(record) != 1:
-            out="{result: '{} does not exist'}".format(guid)
+            out='{"result": "{} does not exist"}'.format(guid)
         else:
             nrArgs = len(req.params)
-            # called without sure form, let's produce one
+            # called without submitted form, let's produce one
             if nrArgs == 1 or nrArgs == 2 and org: # 1 or 2 args if 2 org must have value
-                out = '<form action="{}" method="POST"><input type="hidden" name="guid" value="{}"><input type="hidden" name="org" value="{}"><input type="hidden" name="sure" value="true">\n'.format(scriptname, guid, org)
+                out = '<form action="{}" method="POST"><input type="hidden" name="guid" value="{}"><input type="hidden" name="org" value="{}"><input type="hidden" name="submitted" value="true">\n'.format(scriptname, guid, org)
                 for field in fields:
                     if fieldsDef[field][1] == 'checkbox':
                         if record[fields.index(field)] == True:

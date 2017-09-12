@@ -171,6 +171,7 @@ def application(environ, start_response):
                         'phototime': gpsPhoto.phototimestampz}}
 
         gpsDB.insertGpsPhotoRow(rowDict=rowDict)
+        res.body = '{"guid": "{}"}'.format(gpsPhoto.guid)
         return res(environ, start_response)
     except Exception, e:
         exc_obj = sys.exc_info()[1]

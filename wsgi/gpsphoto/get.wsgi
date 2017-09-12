@@ -29,9 +29,9 @@ def application(environ, start_response):
     numberofdays=6
     f=<json|pjson|kml|kmz>
     '''
+
     req = Request(environ)
     res = Response()
-    
     data = {}
     query = {}
     try:
@@ -40,60 +40,51 @@ def application(environ, start_response):
             f = req.GET['f'].lower()
         else:
             f = 'json'
-
         # tzdata compatible time zone
         if  'timezone' in req.params:
             timeZone = timezone(req.GET['timezone'])
         else:
             timeZone = timezone('UTC') # if we cannot get the timezone let's assume UTC
         data['timezone'] = timeZone.zone
-
         # e.g. 2016-09-26
         if 'begindate' in req.params and req.params['begindate'] != "":
             beginDate = req.params['begindate']
             data['begindate'] = beginDate
         else:
             beginDate = None
-        
         if 'enddate' in req.params and req.params['enddate'] != "":
             endDate = req.params['enddate']
             data['enddate'] = endDate
         else:
             endDate = None
-            
         # org determines which table the data is stored in and possibly what domain values are available.
         if 'org' in req.params and req.params['org'] != "":
             org = req.params['org']
         else:
             org = None
-        
         # email address / user name?
         if 'user' in req.params and req.params['user'] != "":
             user = req.params['user']
             data['user'] = user
         else:
             user = None
-            
         if 'event' in req.params and req.params['event'] != "":
             event = req.params['event']
             data['event'] = event
         else:
             event = None
-
         # is the entry verified?
         if 'verified' in req.params and req.params['verified'] != "":
             verified = req.params['verified']
             data['verified'] = verified
         else:
             verified = None
-
         # incidenttype (domain value?)
         if 'type' in req.params and req.params['type'] != "":
             incidenttype = req.params['type']
             data['incidenttype'] = incidenttype
         else:
             incidenttype = None
-
         # bounding box to return points for
         # ST_MakeEnvelope(left, bottom, right, top)
         if 'bbox' in req.params:
@@ -105,29 +96,22 @@ def application(environ, start_response):
             data['bboxtop'] =    float(bbox.split(',')[3])
         else:
             bbox = ""
-
         # Number of days ago.... what does that actually mean....?
         # We take the view of the user
         if 'numberofdays' in req.params and req.params['numberofdays'] != "":
             numberofdays = req.params['numberofdays']
-
-            #sys.stderr.write('hallo')
-
             # get current local time of requester
-            if endDate == "":
+            if endDate is None:
                 endDateTime= datetime.now(timeZone)
                 endDate =  endDateTime.strftime("%Y-%m-%d")  # 2016-09-26 18:02:08
             else:
                 endDateTime = datetime.strptime(endDate, "%Y-%m-%d")
-
             # x days ago in whatever timezone
-            if beginDate is "":
+            if beginDate is None:
                 beginDateTime = endDateTime - timedelta(days=int(numberofdays))
                 beginDate = beginDateTime.strftime("%Y-%m-%d")
-
             data['enddate'] = endDate
             data['begindate'] = beginDate
-
         query = {'begindate': 	"phototime AT TIME ZONE %(timezone)s > %(begindate)s",
               'enddate':        "phototime AT TIME ZONE %(timezone)s < %(enddate)s",
               'user':           "userid ILIKE %(user)s",
@@ -136,15 +120,9 @@ def application(environ, start_response):
               'verified':       "verified = %(verified)s",
               'bbox':           "geom @ ST_MakeEnvelope(%(bboxleft)s,%(bboxbottom)s,%(bboxright)s,%(bboxtop)s)"
              }
-        
         gpsDB = GpsDb(org = org)
-
         columns = ['guid', 'title', 'incidenttype', 'description', 'url', 'thumburl', 'verified', 'positioningmethod', 'event', "phototime at time zone '%s' as phototime" % timeZone.zone]
-        
         results = gpsDB.getPhotoPoints(columns=columns, query=query, data=data, limit=100)
-
-        sys.stderr.write(str(results))
-
         if f == 'json' or f == 'pjson':
             points = []
             for entry in results:
@@ -175,9 +153,7 @@ def application(environ, start_response):
                        "name": "EPSG:4326"
                    }
             }
-
             featurecollection = geojson.FeatureCollection(points, crs=crs)
-            
             if f == 'pjson':
                 res.body = "mapitems=" + geojson.dumps(featurecollection)
                 res.headerlist = [('Content-Type', 'application/javascript')]
@@ -200,7 +176,6 @@ def application(environ, start_response):
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         sys.stderr.write("%s\n" % str(e))
         sys.stderr.write("%s line %s\n" % (str(fname), str(exc_tb.tb_lineno)))
-
         res.status = 400
         res.headerlist = [('Content-type', 'text/html')]
         res.body = str(e)

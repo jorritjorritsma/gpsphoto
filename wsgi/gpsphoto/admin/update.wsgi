@@ -101,7 +101,7 @@ def application(environ, start_response):
                 rowDict = {'values' : {'guid': guid, 'title': title, 'description' : description, 'incidenttype' : incidenttype, 'event': event, 'verified': verified}}
 
             gpsDB.updateGpsPhotoRow(guid=guid, rowDict=rowDict)
-            out = "{result: 'success'}"
+            out = '{"result": "success"}'
         res.body = out
         return res(environ, start_response)
     except Exception, e:
