@@ -68,7 +68,7 @@ def application(environ, start_response):
             except:
                 description = ""
             try:
-                incidenttype = req.params['type']
+                incidenttype = req.params['incidenttype']
             except:
                 incidenttype = ""
             try:

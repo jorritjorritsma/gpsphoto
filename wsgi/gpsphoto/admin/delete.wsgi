@@ -52,7 +52,7 @@ def application(environ, start_response):
                 photoStore.deleteFile(os.path.join('thumbs', fileName))
                 photoStore.deleteFile(os.path.join('withexif', fileName))
                 gpsDB.deleteGpsPhotoRow(guid)
-                out = '{{"result": "success"}}'
+                out = '{"result": "success"}'
         elif sure != 'true':
             out = '{{"result": "{} not deleted"}}'.format(guid)
         else:
