@@ -8,6 +8,7 @@ import io
 import time
 import boto
 from boto.s3.key import Key
+from boto.s3.connection import Location
 import datetime
 import uuid
 import os, sys
@@ -524,7 +525,8 @@ class PhotoStore:
             self.bucket = self.connS3.get_bucket(self.bucketName)
         except:
             try:
-                self.bucket = self.connS3.create_bucket(self.bucketName)
+                location = 'location=Location.{}'.format.self.config.S3LOCATION
+                self.bucket = self.connS3.create_bucket(self.bucketName, location=Location.EU)
             except Exception, e:
                 exc_obj = sys.exc_info()[1]
                 exc_tb = sys.exc_info()[2]
