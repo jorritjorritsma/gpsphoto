@@ -33,13 +33,10 @@ class GpsPhoto:
             return(None)
         else:
             self.imageFormat = self.image.format
-        if not self.getExif():
-            return(None)
-        self.correctImageOrientation()
-        if not self.getCoordinates():
-            raise("No coordinates found in photo")
-        if not self.getPhotoTimeStampZ():
-            return(None)
+        if self.getExif():
+            self.getCoordinates()
+            self.getPhotoTimeStampZ()
+            self.correctImageOrientation()
         self.getUploadTimeStampZ()
         self.getResizedImage()
         self.get_guid()

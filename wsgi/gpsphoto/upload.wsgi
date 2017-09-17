@@ -12,13 +12,8 @@ import config
 
 def application(environ, start_response):
     try:
-        #form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ, keep_blank_values=True) 
-
         req = Request(environ)
         res = Response()
-
-        sys.stderr.write("{}\n".format(req.params))
-
         if 'file' in req.params:
             fileitem = req.POST["file"]
         else:
@@ -74,42 +69,59 @@ def application(environ, start_response):
             org = req.POST["org"]
         except:
             org = None
+        # incident title
         try:
             title = req.POST["title"]
         except:
             title = ""
+        # incident description
         try:
             description = req.POST["description"]
         except:
             description = ""
-        
+        # incident type
         try:
             incidenttype = req.POST["type"]
         except:
             incidenttype = ""
+        # event for which incident is registered
         try:
             event = req.POST["event"]
         except:
             event = ""
+        # output type we want json|pjson|kml|kmz
         try:
             f = req.POST["f"]
         except:
             f = ""
+        # latituded in case photo does not contain coordinates
+        try:
+            lat = req.POST["lat"]
+        except:
+            lat = ""
+        # longitude in case photo does not contain coordinates
+        try:
+            lon = req.POST["lon"]
+        except:
+            lon = ""
+        # time photo was taken in unix epoch time
+        try: # must be UTC for now
+            phototime = req.POST["phototime"]
+        except:
+            phototime = ""
 
         f = fileitem.file
         orgFileName = fileitem.filename
-
         gpsPhoto = GpsPhoto(image = f)
-        if not gpsPhoto.processPhoto():
-            raise Exception("Photo has no reliable coordinate information")
-
+        gpsPhoto.processPhoto()
+        # moved error handling to this script so we can also provide lat, lon and photo time 
+        # as arguments
+        if not hasattr(gpsPhoto, 'exif'):
+            raise Exception("Photo has no location information")
         fileName = '{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat)
-        
         # defined as variable to allow this script to be used as well for photos without gps data
         positioningmethod = "GPS" 
-        
         filename = '{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat)
-        
         # Store photo
         photoStore = PhotoStore(org=org)
         # Store public photo - no exif included
@@ -117,7 +129,6 @@ def application(environ, start_response):
             fileName = '{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat),
             imgFormat = gpsPhoto.imageFormat,
             makePublic=True)
-        
         # Let's see if we want to store photo with exif for evidence purposes
         # these will not be made public, probably we need en admin cgi to serve them up
         if org is None or org == "":
@@ -138,11 +149,6 @@ def application(environ, start_response):
             fileName = 'thumbs/{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat),
             imgFormat = gpsPhoto.imageFormat,
             makePublic=True)
-
-        #url = os.path.join(config.S3URL, filename)
-        #thumburl = os.path.join(config.S3URL, 'thumbs', filename)
-        #withexifurl = os.path.join(config.S3URL, 'withexif', filename)
-
         # Store record in DB
         gpsDB = GpsDb(org = org)
         rowDict = {'coordinates': gpsPhoto.coordinates, 
@@ -178,7 +184,6 @@ def application(environ, start_response):
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
         sys.stderr.write("%s\n" % str(e))
         sys.stderr.write("%s line %s\n" % (str(fname), str(exc_tb.tb_lineno)))
-
         res.status = 400
         res.body = str(e)
         return res(environ, start_response)
