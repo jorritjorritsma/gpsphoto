@@ -35,7 +35,8 @@ class GpsPhoto:
         if not self.getExif():
             return(None)
         self.correctImageOrientation()
-        self.getCoordinates()
+        if not self.getCoordinates():
+            raise("No coordinates found in photo")
         if not self.getPhotoTimeStampZ():
             return(None)
         self.getUploadTimeStampZ()
@@ -135,6 +136,9 @@ class GpsPhoto:
     def getCoordinates(self):
         try:
             gps_info = self.exif['GPSInfo']
+        except:
+            return(False) # let the upload script decide how to handle
+        try:
             gps_latitude = self._get_if_exist(gps_info, "GPSLatitude")
             gps_latitude_ref = self._get_if_exist(gps_info, 'GPSLatitudeRef')
             gps_longitude = self._get_if_exist(gps_info, 'GPSLongitude')
@@ -150,13 +154,14 @@ class GpsPhoto:
                     lon = 0 - lon
 
             gps_altitude = self._get_if_exist(gps_info, 'GPSAltitude')
-            #gps_altitude_ref = self._get_if_exist(gps_info, 'GPSAltitudeRef')
             try:
                 z = [float(x)/float(y) for x, y in gps_altitude]
             except:
                 z = None
             
             gps_mapdatum = self._get_if_exist(gps_info, "GPSMapDatum")
+            if gps_mapdatum:
+                gps_mapdatum = gps_mapdatum.rstrip()
 
             gps_imgdirection = self._get_if_exist(gps_info, "GPSImgDirection")
             try:
@@ -164,7 +169,7 @@ class GpsPhoto:
             except:
                 bearing = None
 
-            self.coordinates = {'mapdatum': gps_mapdatum.rstrip(), 'lon': lon, 'lat': lat, 'bearing': bearing, 'z': z}
+            self.coordinates = {'mapdatum': gps_mapdatum, 'lon': lon, 'lat': lat, 'bearing': bearing, 'z': z}
             return(True)
         except Exception, e:
             exc_obj = sys.exc_info()[1]
@@ -387,7 +392,8 @@ class GpsDb:
             if mapdatum == 'WGS-84':
                 rsid = 4326
             else:
-                rsid = 4326 # don't know how to handle this yet....
+                rsid = 4326 # don't know how to handle this yet, we should never end up here anyway
+                # bedause it's just not correct I'll keep this here and maybe one day...
            
             # geom is special
             rowDict['values']['geom'] = [lon, lat, z, rsid]
