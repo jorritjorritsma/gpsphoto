@@ -1,27 +1,33 @@
 <?php
 /*
 Plugin Name: gpsphotomap
-Plugin URI: http://jorritsma.cc/gpsphoto
+Plugin URI: https://jorritsma.cc/gpsphoto
 Description: Plugin to upload photos to the gpsphoto application
-Version: 1.0
+Version: 1.1
 Author: Jorrit Jorritsma
-Author URI: http://jorritsma.cc
+Author URI: https://jorritsma.cc
+License: GPL-3.0
+License URI: https://www.gnu.org/licenses/gpl-3.0.txt
 */
 
-$site = "https://gpsphotomap.com";
+// If this file is called directly, abort.
+if ( ! defined( 'WPINC' ) ) {
+    die;
+}
 
-function gpsphotomap_html_form_code($site, $username) {
+include 'gpsphotomap-settings.php';
+
+$site = get_option('gpsphoto_server');
+$org = get_option('gpsphoto_organization');
+
+function gpsphotomap_html_form_code($site, $org, $username) {
     $form = '
-    
         <div id="mapid" style="width: 800; height: 600px;"></div>
         <form class="form-horizontal" id="qform" action="#" name="qform">
 <fieldset>
 
-<!-- Form Name -->
-<!-- <legend>Filter Events</legend> -->
-
 <input name="timezone" id="timezone" value="" type="hidden">
-<input name="org" id="org" value="" type="hidden">
+<input name="org" id="org" value="' . $org . '" type="hidden">
 
 <!-- Text input-->
 <div class="form-group">
@@ -106,15 +112,16 @@ function gpsphotomap_html_form_code($site, $username) {
 
 </fieldset>
 </form>';
-
     return($form);
 }
 
-function gpsphotomap_shortcode($site) {
+function gpsphotomap_shortcode() {
     ob_start();
+    global $site;
+    global $org;
     $current_user = wp_get_current_user();
     $username = $current_user->user_email;
-    $form = gpsphotomap_html_form_code($site, $username);
+    $form = gpsphotomap_html_form_code($site, $org, $username);
     echo $form;
     return ob_get_clean();
 }
@@ -128,17 +135,20 @@ function gpsphotomap_adding_styles() {
     wp_enqueue_style('bootstrap');    
 }
     
-function gpsphotomap_adding_scripts($site) {
+function gpsphotomap_adding_scripts() {
+    global $site;
+    global $org;
     wp_register_script('leaflet', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js', __FILE__);
     wp_enqueue_script('leaflet');
     wp_register_script('pikaday', 'https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.5.1/pikaday.js', __FILE__);
     wp_enqueue_script('pikaday');
     wp_register_script('jstz', 'https://cdnjs.cloudflare.com/ajax/libs/jstimezonedetect/1.0.6/jstz.min.js', __FILE__, '', '', true);
     wp_enqueue_script('jstz');
-    wp_register_script('gpsphotomap', plugins_url('gpsphotomap.js', __FILE__), '', '',true);
+    wp_register_script('gpsphotomap', plugins_url('js/gpsphotomap.js', __FILE__), '', '',true);
     wp_enqueue_script('gpsphotomap');
     $dataToBePassed = array(
-        'site'            => $site);
+    'site'            => $site,
+    'org'             => $org);
     wp_localize_script( 'gpsphotomap', 'php_vars', $dataToBePassed );
 
 }
