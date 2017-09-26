@@ -23,9 +23,14 @@ var satellite = L.tileLayer(mapboxUrl, {id: 'mapbox.satellite', maxZoom: 18, att
     osm = L.tileLayer(osmUrl, {maxZoom: 19, attribution: osmAttr}),
     esriWorldImagery =  L.tileLayer(esriWorldImageryUrl, {maxZoom: 19, attribution: esriWorldImageryAttr});
 
-var mymap = L.map("mapid", {
+/*var mymap = L.map("mapid", {
     center: [51.755, 4.373],
     zoom: 10,
+    layers: [osm]
+});*/
+var mymap = L.map("mapid", {
+    center: [php_vars.longitude, php_vars.latitude],
+    zoom: php_vars.zoomlevel,
     layers: [osm]
 });
 

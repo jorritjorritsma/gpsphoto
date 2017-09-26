@@ -19,6 +19,9 @@ include 'gpsphotomap-settings.php';
 
 $site = get_option('gpsphoto_server');
 $org = get_option('gpsphoto_organization');
+$longitude = get_option('gpsphoto_longitude');
+$latitude = get_option('gpsphoto_latitude');
+$zoomlevel = get_option('gpsphoto_zoomlevel');
 
 function gpsphotomap_html_form_code($site, $org, $username) {
     $form = '
@@ -138,6 +141,9 @@ function gpsphotomap_adding_styles() {
 function gpsphotomap_adding_scripts() {
     global $site;
     global $org;
+    global $longitude;
+    global $latitude;
+    global $zoomlevel;
     wp_register_script('leaflet', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js', __FILE__);
     wp_enqueue_script('leaflet');
     wp_register_script('pikaday', 'https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.5.1/pikaday.js', __FILE__);
@@ -148,7 +154,10 @@ function gpsphotomap_adding_scripts() {
     wp_enqueue_script('gpsphotomap');
     $dataToBePassed = array(
     'site'            => $site,
-    'org'             => $org);
+    'org'             => $org,
+    'longitude'       => $longitude,
+    'latitude'        => $latitude,
+    'zoomlevel'       => $zoomlevel);
     wp_localize_script( 'gpsphotomap', 'php_vars', $dataToBePassed );
 
 }
