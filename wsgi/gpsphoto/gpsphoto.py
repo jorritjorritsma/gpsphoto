@@ -522,7 +522,7 @@ class PhotoStore:
             self.bucket = self.connS3.get_bucket(self.bucketName)
         except:
             try:
-                location = 'location=Location.{}'.format.self.config.S3LOCATION
+                # Only works if S3 account is root user
                 self.bucket = self.connS3.create_bucket(self.bucketName, location=Location.EU)
             except Exception, e:
                 exc_obj = sys.exc_info()[1]
