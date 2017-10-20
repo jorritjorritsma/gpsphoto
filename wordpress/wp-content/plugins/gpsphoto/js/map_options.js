@@ -23,13 +23,8 @@ var satellite = L.tileLayer(mapboxUrl, {id: 'mapbox.satellite', maxZoom: 18, att
     osm = L.tileLayer(osmUrl, {maxZoom: 19, attribution: osmAttr}),
     esriWorldImagery =  L.tileLayer(esriWorldImageryUrl, {maxZoom: 19, attribution: esriWorldImageryAttr});
 
-/*var mymap = L.map("mapid", {
-    center: [51.755, 4.373],
-    zoom: 10,
-    layers: [osm]
-});*/
 var mymap = L.map("mapid", {
-    center: [php_vars.longitude, php_vars.latitude],
+    center: [php_vars.latitude, php_vars.longitude],
     zoom: php_vars.zoomlevel,
     layers: [osm]
 });
@@ -84,20 +79,16 @@ function addLayerToMap(map, layer) {
   }).addTo(map);
 }
 
-//addLayerToMap(mymap, mapitems);
-	
-
 function getFormData() {
   //var org = document.getElementsByName("org")[0].value;
   var enddate = document.getElementsByName("enddate")[0].value;
-  var numberofdays = document.getElementsByName("numberofdays")[0].value;
+  var begindate = document.getElementsByName("begindate")[0].value;
   var type = document.getElementsByName("type")[0].value;
-  var user = document.getElementsByName("user")[0].value;
   var timezone = document.getElementsByName("timezone")[0].value;
   var verified = document.getElementsByName("verified")[0].value;
   var event = document.getElementsByName("event")[0].value;
   
-  url = php_vars.site + "/get?org=" + php_vars.org + "&enddate=" + enddate + "&numberofdays=" + numberofdays + "&type=" + type + "&user=" + user + "&timezone=" + timezone + "&event=" + event + "&verified=" + verified + "&f=pjson";
+  url = php_vars.server + "/get?org=" + php_vars.org + "&enddate=" + enddate + "&begindate=" + begindate + "&type=" + type + "&timezone=" + timezone + "&event=" + event + "&verified=" + verified + "&f=pjson";
   
   function getNewJSON(src, callback) {
     newjsonfile = document.createElement("script");
@@ -133,9 +124,23 @@ new Pikaday({
   }
 });
 
+new Pikaday({
+  field: document.getElementById("begindate"),
+  onSelect: function(date) {
+    const year = date.getFullYear(),
+    month = date.getMonth() + 1,
+    day = date.getDate(),
+    formattedDate = [
+      year,
+      month < 10 ? "0" + month : month,
+      day < 10 ? "0" + day : day
+    ].join("-");
+    document.getElementById("begindate").value = formattedDate;
+  }
+});
+
 var mytimezone=jstz.determine().name();
-//var org = document.getElementsByName("org")[0].value;
-var jsonurl = php_vars.site + '/get?org=' + php_vars.org + '&f=pjson&timezone=' + mytimezone;
+var jsonurl = php_vars.server + '/get?org=' + php_vars.org + '&f=pjson&timezone=' + mytimezone;
 
 (function(d, script) {
     script = d.createElement('script');

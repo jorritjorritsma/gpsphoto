@@ -5,6 +5,7 @@ Dropzone.options.myform= {
     autodiscover: false,
     parallelUploads: 4,
     maxFiles: 4,
+    withCredentials: true,
     // The setting up of the dropzone
     init: function() {
         var myDropzone = this;
@@ -46,11 +47,10 @@ function b64EncodeUnicode(str) {
 };
 
 var thispage = window.location.href;
-//stateString = b64EncodeUnicode('{ "referer" : "http://gpsphoto.fritz.box/wordpress/index.php/incident-reporting-drop-zone/"}');
 stateString = b64EncodeUnicode('{ "referer" : "' + thispage + '"}');
 
 function login() {
-    url = php_vars.site + "/logon?state=" + stateString;
+    url = php_vars.server + "/logon?state=" + stateString;
     window.open(url,"_self")
 }
 
