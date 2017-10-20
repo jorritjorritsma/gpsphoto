@@ -39,7 +39,7 @@ function gpsphotodropzone_html_form_code($server, $org, $types, $askformail, $ev
 
           <!-- Select Basic -->
           <div class="form-group">
-            <label class="col-md-3 control-label" for="type">Incident type</label>
+            <label class="col-md-3 control-label" for="type">Type</label>
             <div class="col-md-9">
               <select id="type" name="type" class="form-control">';
 

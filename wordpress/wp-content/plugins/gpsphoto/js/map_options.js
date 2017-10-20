@@ -80,7 +80,7 @@ function addLayerToMap(map, layer) {
 }
 
 function getFormData() {
-  //var org = document.getElementsByName("org")[0].value;
+  var org = document.getElementsByName("org")[0].value;
   var enddate = document.getElementsByName("enddate")[0].value;
   var begindate = document.getElementsByName("begindate")[0].value;
   var type = document.getElementsByName("type")[0].value;
@@ -88,7 +88,7 @@ function getFormData() {
   var verified = document.getElementsByName("verified")[0].value;
   var event = document.getElementsByName("event")[0].value;
   
-  url = php_vars.server + "/get?org=" + php_vars.org + "&enddate=" + enddate + "&begindate=" + begindate + "&type=" + type + "&timezone=" + timezone + "&event=" + event + "&verified=" + verified + "&f=pjson";
+  url = php_vars.server + "/get?org=" + org + "&enddate=" + enddate + "&begindate=" + begindate + "&type=" + type + "&timezone=" + timezone + "&event=" + event + "&verified=" + verified + "&f=pjson";
   
   function getNewJSON(src, callback) {
     newjsonfile = document.createElement("script");
