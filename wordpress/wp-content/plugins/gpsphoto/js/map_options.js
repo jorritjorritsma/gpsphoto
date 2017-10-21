@@ -23,6 +23,15 @@ var satellite = L.tileLayer(mapboxUrl, {id: 'mapbox.satellite', maxZoom: 18, att
     osm = L.tileLayer(osmUrl, {maxZoom: 19, attribution: osmAttr}),
     esriWorldImagery =  L.tileLayer(esriWorldImageryUrl, {maxZoom: 19, attribution: esriWorldImageryAttr});
 
+server = php_vars.server;
+org = php_vars.org;
+types = php_vars.types.split(',');
+longitude = php_vars.longitude;
+latitude = php_vars.latitude;
+zoomlevel = php_vars.zoomlevel;
+
+
+
 var mymap = L.map("mapid", {
     center: [php_vars.latitude, php_vars.longitude],
     zoom: php_vars.zoomlevel,
@@ -52,23 +61,24 @@ function onEachFeature(feature, layer) {
     }
 }
 
+
 function addLayerToMap(map, layer) {
   locationLayer = L.geoJSON(layer, {
       pointToLayer: function (feature, latlng) {
-      switch (feature.properties.eventtype) {
-        case "nice":        
+      switch (feature.properties.incidenttype) {
+        case types[0]:        
           geojsonMarkerOptions.fillColor="#00FF00";
           return L.circleMarker(latlng, geojsonMarkerOptions);
-        case "notable":
+        case types[1]:
           geojsonMarkerOptions.fillColor="#B9FF00";
           return L.circleMarker(latlng, geojsonMarkerOptions);
-        case "threatening":
+        case types[2]:
           geojsonMarkerOptions.fillColor="#FFFF00";
           return L.circleMarker(latlng, geojsonMarkerOptions);
-        case "harassment":
+        case types[3]:
           geojsonMarkerOptions.fillColor="#FB5C00";
           return L.circleMarker(latlng, geojsonMarkerOptions);
-        case "violence":
+        case types[4]:
           geojsonMarkerOptions.fillColor="#FA0000";
           return L.circleMarker(latlng, geojsonMarkerOptions);
         default:
@@ -80,7 +90,6 @@ function addLayerToMap(map, layer) {
 }
 
 function getFormData() {
-  var org = document.getElementsByName("org")[0].value;
   var enddate = document.getElementsByName("enddate")[0].value;
   var begindate = document.getElementsByName("begindate")[0].value;
   var type = document.getElementsByName("type")[0].value;
@@ -88,7 +97,7 @@ function getFormData() {
   var verified = document.getElementsByName("verified")[0].value;
   var event = document.getElementsByName("event")[0].value;
   
-  url = php_vars.server + "/get?org=" + org + "&enddate=" + enddate + "&begindate=" + begindate + "&type=" + type + "&timezone=" + timezone + "&event=" + event + "&verified=" + verified + "&f=pjson";
+  url = server + "/get?org=" + org + "&enddate=" + enddate + "&begindate=" + begindate + "&type=" + type + "&timezone=" + timezone + "&event=" + event + "&verified=" + verified + "&f=pjson";
   
   function getNewJSON(src, callback) {
     newjsonfile = document.createElement("script");
@@ -98,7 +107,6 @@ function getFormData() {
     newjsonfile.onload = function(){
       callback(mapitems);
     };
-    //alert(JSON.stringify(mapitems))
     document.getElementsByTagName('head')[0].appendChild(newjsonfile);
   }
 
@@ -140,15 +148,16 @@ new Pikaday({
 });
 
 var mytimezone=jstz.determine().name();
-var jsonurl = php_vars.server + '/get?org=' + php_vars.org + '&f=pjson&timezone=' + mytimezone;
+//var jsonurl = php_vars.server + '/get?org=' + php_vars.org + '&f=pjson&timezone=' + mytimezone;
+var jsonurl = server + '/get?org=' + php_vars.org + '&f=pjson&timezone=' + mytimezone;
 
 (function(d, script) {
+
     script = d.createElement('script');
     script.type = 'text/javascript';
     script.async = true;
     script.onload = function(){
-        addLayerToMap(mymap, mapitems);
-        //alert(JSON.stringify(mapitems))
+        addLayerToMap(mymap, mapitems, types);
     };
     script.src = jsonurl;
     script.id = 'jsonfile';
