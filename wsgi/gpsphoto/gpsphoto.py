@@ -27,16 +27,18 @@ class GpsPhoto:
             self.getImageFromPath(imagePath)
         if image is not None:
             self.image = Image.open(image)
+        if not hasattr(self, 'image'):
+            raise Exception("No image provided to gpsphoto")
 
     def processPhoto(self):
         if self.image.format != 'JPEG' and gpsPhoto.image.format != 'PNG':
-            return(None)
+            raise Exception("File provided was no JPG or PNG file")
         else:
             self.imageFormat = self.image.format
         if self.getExif():
             self.getCoordinates()
-            self.getPhotoTimeStampZ()
             self.correctImageOrientation()
+        self.getPhotoTimeStampZ()
         self.getUploadTimeStampZ()
         self.getResizedImage()
         self.get_guid()
@@ -48,21 +50,17 @@ class GpsPhoto:
             fd = urllib.urlopen(url)
             imageFile = io.BytesIO(fd.read())
             self.image = Image.open(imageFile)
-            return(True)
         except Exception, e:
             print "failed getImageFromUrl"
             print str(e)
-            return(None)
 
     def getImageFromPath(self, path):
         '''Get image from file path'''
         try:
             self.image = Image.open(path)
-            return(True)
         except Exception, e:
             print "failed getImageFromPath"
             print str(e)
-            return(None)
 
     def _get_if_exist(self, data, key):
         if key in data:
@@ -180,73 +178,51 @@ class GpsPhoto:
             return(None)
     
     #def setCoordinates(self):
-        
-    def getDate(self):
-        try:
-            gps_info = self.exif['GPSInfo']
-            rawdate = self._get_if_exist(gps_info, "GPSDateStamp")
-            date = rawdate.split(":")
-            self.date = map(int, date)
-            return(True)
-        except Exception, e:
-            print 'failed getDate'
-            print str(e)
-            self.date = []
-            return(None)
-    
-    def getTime(self):
+
+    def getDateTime(self):
+        """
+        Get timestamp from photo's exif header
+        GPS time and date are tried first, if that fails the dateTimeOriginal
+        """
+        # let's first try to get gpsdate and gpstime DateTimeOriginal
         try:
             gps_info = self.exif['GPSInfo']
             rawtime = self._get_if_exist(gps_info, "GPSTimeStamp")
-            self.time = [rawtime[0][0], rawtime[1][0], rawtime[2][0]]
-            return(True)
-        except Exception, e:
-            print 'failed getTime'
-            print str(e)
-            self.time = []
-            return(None)
-
+            rawdate = self._get_if_exist(gps_info, "GPSDateStamp")
+            date = rawdate.split(":")
+            date = map(int, date)
+            self.photoTimeStamp = time.strptime("{:04d}:{:02d}:{:02d} {:02d}:{:02d}:{:02d}".format(date[0], date[1], date[2], rawtime[0][0], rawtime[1][0], rawtime[2][0]), '%Y:%m:%d %H:%M:%S')
+        except:
+            print("Failed getting GPSTimeStamp and GPSDateStamp, trying camera's time")
+        # if that fails, fail over to DateTimeOriginal which is the time of the camera / photo
+        # this is however less reliable time
+        if not hasattr(self, 'photoTimeStamp') or self.photoTimeStamp is None:
+            try:
+                dateTimeOriginal = self.exif["DateTimeOriginal"]
+                # 2017:07:06 11:45:51
+                self.photoTimeStamp = time.strptime(dateTimeOriginal, '%Y:%m:%d %H:%M:%S')
+            except:
+                raise Exception("Could not take time from photo")
+        
     def getUploadTimeStampZ(self):
-        try:
-            self.uploadtimestampz = '{:%Y-%m-%d %H:%M:%S} UTC'.format(datetime.datetime.utcnow())
-            return (True)
-        except Exception, e:
-            print 'failed getUploadTimeStampZ'
-            print str(e)
-            self.uploadtimestampz = None
-            return(None)
+        self.uploadtimestampz = '{:%Y-%m-%d %H:%M:%S} UTC'.format(datetime.datetime.utcnow())
 
     def getPhotoTimeStampZ(self):
-        try:
-            self.getDate()
-            self.getTime()
-            self.phototimestampz = '%04d-%02d-%02d %02d:%02d:%02d UTC' % (self.date[0], self.date[1], self.date[2], self.time[0], self.time[1], self.time[2])
-            # if the time is not properly set, there is probably no connection with GPS
-            # assume wrong location is best, thus bail here
-            if self.phototimestampz.startswith('0000'):
-                raise Exception('Wrong time in photo')
-            return (True)
-        except Exception, e:
-            print 'failed getPhotoTimeStampZ'
-            print str(e)
-            self.phototimestampz = None
-            return(None)
+        """ 
+        Format time stamp for time zone aware postgres time
+        Delete it if the content does not make sense
+        """
+        self.getDateTime()
+        self.phototimestampz = time.strftime("%Y-%m-%d %H:%M:%S UTC", self.photoTimeStamp)
+        # if the time is not properly set, there is probably no connection with GPS
+        if self.phototimestampz.startswith('0000'):
+            del self.phototimestampz
     
-    def getEpoch(self):
-        try:
-            self.getDate(self.exif)
-            self.getTime(self.exif)
-            date_time = '%4d:%02d:%02d:%02d:%02d:%02d' % (self.date[0], self.date[1], self.date[2], self.time[0], self.time[1], self.time[2])
-            pattern = '%Y:%m:%d:%H:%M:%S'
-            self.epoch = int(time.mktime(time.strptime(date_time, pattern)))
-            return(True)
-        except Exception, e:
-            print 'failed getEpoch'
-            print str(e)
-            self.epoch = None
-            return(None)
-        
     def getResizedImage(self, imgWidth=None, imgHeight=None, thumbWidth=None, thumbHeight=None):
+        """ 
+        Resize image to max width or height to exceed neither while maintaining aspect ratio
+        self.resizedImage and self.thumbnail contain the resized image
+        """
         if imgWidth is None:
             imgWidth = self.config.IMG_WIDTH
         if imgHeight is None:
@@ -334,8 +310,7 @@ class GpsDb:
         #            }
         # }
         if guid is None:
-            print("Trying to update a record without specifying a guid")
-            return(None)
+            raise Exception("Trying to update a record without specifying a guid")
         try:
             rowDict['guid'] = guid
             (sql, data) = self._updateOrModifySql(rowDict, 'update')
@@ -522,7 +497,7 @@ class PhotoStore:
             self.bucket = self.connS3.get_bucket(self.bucketName)
         except:
             try:
-                # Only works if S3 account is root user
+                #location = 'location=Location.{}'.format(self.config.S3LOCATION)
                 self.bucket = self.connS3.create_bucket(self.bucketName, location=Location.EU)
             except Exception, e:
                 exc_obj = sys.exc_info()[1]

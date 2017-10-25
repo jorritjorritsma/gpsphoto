@@ -126,7 +126,7 @@ def application(environ, start_response):
         photoStore = PhotoStore(org=org)
         # Store public photo - no exif included
         url = photoStore.storeImage(image = gpsPhoto.resizedImage,
-            fileName = '{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat),
+            fileName = '{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat.lower().replace('jpeg', 'jpg')),
             imgFormat = gpsPhoto.imageFormat,
             makePublic=True)
         # Let's see if we want to store photo with exif for evidence purposes
@@ -137,7 +137,7 @@ def application(environ, start_response):
             keepExif = config.KEEP_EXIF[org]
         if keepExif: # Check if we want to save the exif for this org
             withexifurl = photoStore.storeImage(image = gpsPhoto.resizedImage,
-                fileName = 'withexif/{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat),
+                fileName = 'withexif/{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat.lower().replace('jpeg', 'jpg')),
                 imgFormat = gpsPhoto.imageFormat,
                 exif = gpsPhoto.exifbytes,
                 keepExif=keepExif,
@@ -146,7 +146,7 @@ def application(environ, start_response):
             withexifurl = "" # need something to go in DB
         # Store Thumbnail
         thumburl = photoStore.storeImage(image = gpsPhoto.thumbnail,
-            fileName = 'thumbs/{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat),
+            fileName = 'thumbs/{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat.lower().replace('jpeg', 'jpg')),
             imgFormat = gpsPhoto.imageFormat,
             makePublic=True)
         # Store record in DB
