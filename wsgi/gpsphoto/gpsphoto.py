@@ -148,6 +148,9 @@ class GpsPhoto:
                 lon = self._convert_to_dec_degrees(gps_longitude)
                 if gps_longitude_ref != "E":
                     lon = 0 - lon
+                # check if coordinates are sane and if not....
+		if lat > 90 or lat < -90 or lon > 180 or lon < -180:
+                    raise Exception("No usable coordinates stored in photo")
 
             gps_altitude = self._get_if_exist(gps_info, 'GPSAltitude')
             try:
@@ -174,7 +177,8 @@ class GpsPhoto:
             print(str(e))
             print("%s line %s\n" % (str(fname), str(exc_tb.tb_lineno)))
             print('Failed on getCoordinates')
-            self.coordinates = {}
+            if hasattr(self, 'coordinates'):
+                del self.coordinates
             return(None)
     
     #def setCoordinates(self):

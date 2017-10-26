@@ -117,7 +117,11 @@ def application(environ, start_response):
         # moved error handling to this script so we can also provide lat, lon and photo time 
         # as arguments
         if not hasattr(gpsPhoto, 'exif'):
-            raise Exception("Photo has no location information")
+            raise Exception("Photo contains no Meta Data (EXIF)")
+        if not hasattr(gpsPhoto, 'coordinates'):
+            raise Exception("Photo has no valid location information")
+        print 'boer'
+        print str(gpsPhoto.coordinates)
         fileName = '{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat)
         # defined as variable to allow this script to be used as well for photos without gps data
         positioningmethod = "GPS" 
