@@ -37,6 +37,7 @@ var mymap = L.map("mapid", {
     zoom: php_vars.zoomlevel,
     layers: [osm]
 });
+var cluster = new L.MarkerClusterGroup();
 
 // Chosen basemap layers for inclusion
 var baseLayers = {
@@ -86,7 +87,9 @@ function addLayerToMap(map, layer) {
           return L.circleMarker(latlng, geojsonMarkerOptions);
       }
     }, onEachFeature: onEachFeature
-  }).addTo(map);
+  })
+  //}).addTo(map);
+  cluster.addLayer(locationLayer).addTo(map);
 }
 
 function getFormData() {
@@ -111,8 +114,9 @@ function getFormData() {
   }
 
   getNewJSON(url, function(mapitems) {
-    mymap.removeLayer(locationLayer);
-    addLayerToMap(mymap, mapitems);
+    //mymap.removeLayer(locationLayer);
+    cluster.removeLayer(locationLayer)
+    addLayerToMap(mymap, mapitems, types);
   });
   
 }
@@ -152,7 +156,6 @@ var mytimezone=jstz.determine().name();
 var jsonurl = server + '/get?org=' + php_vars.org + '&f=pjson&timezone=' + mytimezone;
 
 (function(d, script) {
-
     script = d.createElement('script');
     script.type = 'text/javascript';
     script.async = true;

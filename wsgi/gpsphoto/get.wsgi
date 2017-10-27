@@ -128,8 +128,16 @@ def application(environ, start_response):
             for entry in results:
                 guid = entry[1] # geometry = 0!
                 photoTime = entry[10].strftime('%-d %b %Y %-H:%M')
-                title = '<h1>{} ({})</h1>Event: {}<br>'.format(entry[2], entry[3], entry[9])
+                title = '<h1>{}</h1>'.format(entry[2], entry[3], entry[9])
                 image = '<p><a href="%s"><img src="%s" /></a></p>Photo taken at %s (%s)<br>' % (entry[5], entry[6], photoTime, timeZone.zone)
+                if entry[3] is not None or entry[3] != '':
+                    incidenttype = 'Type: {}<br>'.format(entry[3])
+                else:
+                    incidenttype = ''
+                if entry[9] is not None or entry[9] != '':
+                    event = 'Event: {}<br>'.format(entry[9])
+                else:
+                    event = ''
                 description = "<br>".join(textwrap.wrap(entry[4], 40))
                 popup = title + image + description
                 myFeature = geojson.Feature(geometry=entry[0],

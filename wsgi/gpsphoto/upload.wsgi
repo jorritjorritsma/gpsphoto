@@ -1,10 +1,7 @@
 #!/bin/env python
 from webob import Request, Response
 from webob.multidict import (NestedMultiDict, MultiDict)
-import cgi, os, sys
-import cgitb; cgitb.enable()
-
-from pprint import pprint
+import os, sys
 
 sys.path.append(os.path.dirname(__file__))
 from gpsphoto import GpsPhoto, GpsDb, PhotoStore
@@ -120,8 +117,6 @@ def application(environ, start_response):
             raise Exception("Photo contains no Meta Data (EXIF)")
         if not hasattr(gpsPhoto, 'coordinates'):
             raise Exception("Photo has no valid location information")
-        print 'boer'
-        print str(gpsPhoto.coordinates)
         fileName = '{}.{}'.format(gpsPhoto.guid, gpsPhoto.imageFormat)
         # defined as variable to allow this script to be used as well for photos without gps data
         positioningmethod = "GPS" 
