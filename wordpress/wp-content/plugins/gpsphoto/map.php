@@ -33,7 +33,7 @@ function gpsphotomap_html_form_code($server, $org, $types) {
 
 <!-- Select Basic -->
 <div class="form-group">
-  <label class="col-md-4 control-label" for="type">Incident type</label>
+  <label class="col-md-4 control-label" for="type">Type</label>
   <div class="col-md-4">
     <select id="Type" name="type" class="form-control">
         <option selected="selected" value="">All</option>';
@@ -90,8 +90,12 @@ function gpsphotomap_shortcode() {
 }
 
 function gpsphotomap_adding_styles() {
-    wp_register_style('leafletcss', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.css', __FILE__);
+    wp_register_style('leafletcss', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css', __FILE__);
     wp_enqueue_style('leafletcss');
+    wp_register_style('markerclustercss', 'https://unpkg.com/leaflet.markercluster@1.1.0/dist/MarkerCluster.css', __FILE__);
+    wp_enqueue_style('markerclustercss');
+    wp_register_style('markerclusterdefaultcss', 'https://unpkg.com/leaflet.markercluster@1.1.0/dist/MarkerCluster.Default.css', __FILE__);
+    wp_enqueue_style('markerclusterdefaultcss');
     wp_register_style('pikadaycss', 'https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.5.1/css/pikaday.min.css', __FILE__);
     wp_enqueue_style('pikadaycss');
     wp_register_style('bootstrap', 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css', __FILE__);
@@ -100,8 +104,12 @@ function gpsphotomap_adding_styles() {
     
 function gpsphotomap_adding_scripts() {
     $options = get_option('gpsphoto_settings');
-    wp_register_script('leaflet', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.0.3/leaflet.js', __FILE__);
+    wp_register_script('leaflet', 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js', __FILE__);
     wp_enqueue_script('leaflet');
+    wp_register_script('leafletmarkercluster', 'https://unpkg.com/leaflet.markercluster@1.1.0/dist/leaflet.markercluster.js', __FILE__);
+    wp_enqueue_script('leafletmarkercluster');
+    //wp_register_script('prunecluster', plugins_url('js/PruneCluster.js', __FILE__), '', '', true);
+    //wp_enqueue_script('prunecluster');
     wp_register_script('pikaday', 'https://cdnjs.cloudflare.com/ajax/libs/pikaday/1.5.1/pikaday.js', __FILE__);
     wp_enqueue_script('pikaday');
     wp_register_script('jstz', 'https://cdnjs.cloudflare.com/ajax/libs/jstimezonedetect/1.0.6/jstz.min.js', __FILE__, '', '', true);

@@ -30,22 +30,11 @@ longitude = php_vars.longitude;
 latitude = php_vars.latitude;
 zoomlevel = php_vars.zoomlevel;
 
-
-
-var mymap = L.map("mapid", {
-    center: [php_vars.latitude, php_vars.longitude],
-    zoom: php_vars.zoomlevel,
-    layers: [osm]
-});
-var cluster = new L.MarkerClusterGroup();
-
 // Chosen basemap layers for inclusion
 var baseLayers = {
     "OSM": osm,
     "World Imagery (ESRI)": esriWorldImagery
 };
-
-L.control.layers(baseLayers).addTo(mymap);
 
 var geojsonMarkerOptions = {
   radius: 8,
@@ -58,38 +47,50 @@ var geojsonMarkerOptions = {
 function onEachFeature(feature, layer) {
     // does this feature have a property named popupContent?
     if (feature.properties && feature.properties.popup) {
-    layer.bindPopup(feature.properties.popup);
+        layer.bindPopup(feature.properties.popup);
     }
 }
 
+var mymap = L.map("mapid", {
+    center: [php_vars.latitude, php_vars.longitude],
+    zoom: php_vars.zoomlevel,
+    layers: [osm]
+});
+
+L.control.layers(baseLayers).addTo(mymap);
+
+var cluster = new L.MarkerClusterGroup();
+var locationLayer;
 
 function addLayerToMap(map, layer) {
   locationLayer = L.geoJSON(layer, {
-      pointToLayer: function (feature, latlng) {
+    onEachFeature: onEachFeature,
+    pointToLayer: function (feature, latlng) {
       switch (feature.properties.incidenttype) {
-        case types[0]:        
-          geojsonMarkerOptions.fillColor="#00FF00";
-          return L.circleMarker(latlng, geojsonMarkerOptions);
-        case types[1]:
-          geojsonMarkerOptions.fillColor="#B9FF00";
-          return L.circleMarker(latlng, geojsonMarkerOptions);
-        case types[2]:
-          geojsonMarkerOptions.fillColor="#FFFF00";
-          return L.circleMarker(latlng, geojsonMarkerOptions);
-        case types[3]:
-          geojsonMarkerOptions.fillColor="#FB5C00";
-          return L.circleMarker(latlng, geojsonMarkerOptions);
-        case types[4]:
-          geojsonMarkerOptions.fillColor="#FA0000";
-          return L.circleMarker(latlng, geojsonMarkerOptions);
-        default:
-          geojsonMarkerOptions.fillColor="#d3d3d3";
-          return L.circleMarker(latlng, geojsonMarkerOptions);
-      }
-    }, onEachFeature: onEachFeature
+       case types[0]:        
+         geojsonMarkerOptions.fillColor="#00FF00";
+         return L.circleMarker(latlng, geojsonMarkerOptions);
+       case types[1]:
+         geojsonMarkerOptions.fillColor="#B9FF00";
+         return L.circleMarker(latlng, geojsonMarkerOptions);
+       case types[2]:
+         geojsonMarkerOptions.fillColor="#FFFF00";
+         return L.circleMarker(latlng, geojsonMarkerOptions);
+       case types[3]:
+         geojsonMarkerOptions.fillColor="#FB5C00";
+         return L.circleMarker(latlng, geojsonMarkerOptions);
+       case types[4]:
+         geojsonMarkerOptions.fillColor="#FA0000";
+         return L.circleMarker(latlng, geojsonMarkerOptions);
+       default:
+         geojsonMarkerOptions.fillColor="#d3d3d3";
+         return L.circleMarker(latlng, geojsonMarkerOptions);
+    }
+  }
   })
   //}).addTo(map);
-  cluster.addLayer(locationLayer).addTo(map);
+  cluster.addLayer(locationLayer)
+  map.addLayer(cluster)
 }
 
 function getFormData() {
@@ -116,7 +117,7 @@ function getFormData() {
   getNewJSON(url, function(mapitems) {
     //mymap.removeLayer(locationLayer);
     cluster.removeLayer(locationLayer)
-    addLayerToMap(mymap, mapitems, types);
+    addLayerToMap(mymap, mapitems);
   });
   
 }
@@ -160,7 +161,7 @@ var jsonurl = server + '/get?org=' + php_vars.org + '&f=pjson&timezone=' + mytim
     script.type = 'text/javascript';
     script.async = true;
     script.onload = function(){
-        addLayerToMap(mymap, mapitems, types);
+        addLayerToMap(mymap, mapitems);
     };
     script.src = jsonurl;
     script.id = 'jsonfile';

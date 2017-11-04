@@ -1,7 +1,8 @@
 #!/bin/env python
 from webob import Request, Response
 from webob.multidict import (NestedMultiDict, MultiDict)
-import os, sys
+import os
+import sys
 
 sys.path.append(os.path.dirname(__file__))
 from gpsphoto import GpsPhoto, GpsDb, PhotoStore
