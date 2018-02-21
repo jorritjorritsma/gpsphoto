@@ -43,11 +43,12 @@ def application(environ, start_response):
             # we must have recieved a delete request
             gpsDB = GpsDb(org = org)
             record = gpsDB.getGpsPhotoRow(guid, ['filename'])
-            if len(record) != 1:
+
+            if record is None:
                 out="{{result: '{} does not exist'}}".format(guid)
             else:
                 fileName = record[0]
-                photoStore = PhotoStore()
+                photoStore = PhotoStore(org = org)
                 photoStore.deleteFile(fileName)
                 photoStore.deleteFile(os.path.join('thumbs', fileName))
                 photoStore.deleteFile(os.path.join('withexif', fileName))

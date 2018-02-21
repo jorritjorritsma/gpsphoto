@@ -9,7 +9,7 @@ if (! defined('WPINC')) {
 function gpsphotodropzone_html_form_code($server, $org, $types, $askformail, $event, $epoch) {
     $form = '
           <div class="control-group">
-             <a href="#" id="login" onclick=login()><img src="' . $server . '/secure/logged_in.png?' . $epoch . '" width="150" onerror="this.onerror=null;this.src=' . "'" . $server . '/logged_out.png' . "'" . ';" /></a><p/>
+             <a href="#" id="login" onclick=login()><img src="' . $server . '/gpsphoto/secure/logged_in.png?' . $epoch . '" width="150" onerror="this.onerror=null;this.src=' . "'" . $server . '/gpsphoto/logged_out.png' . "'" . ';" /></a><p/>
           </div>
 
     <div id="mydropzone">
