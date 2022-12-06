@@ -534,9 +534,9 @@ class PhotoStore:
             try:
                 output = StringIO.StringIO()
                 if keepExif: # True
-                    image.save(output, format=imgFormat, exif=exif)
+                    image.save(output, format=imgFormat, exif=exif, quality="keep")
                 else: # False
-                    image.save(output, format=imgFormat)
+                    image.save(output, format=imgFormat, quality="keep")
                 fileContents = output.getvalue()
                 output.close()
                 k.set_contents_from_string(fileContents)
